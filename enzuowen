@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发布英语作文 AI 批改任务</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .modal {
+            background: #fff;
+            width: 900px;
+            margin: 0 auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            color: #333;
+        }
+
+        .modal-close {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #999;
+            font-size: 20px;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        /* 步骤条 */
+        .steps {
+            display: flex;
+            justify-content: center;
+            padding: 24px 0;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .step-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #ddd;
+            background: #fff;
+        }
+
+        .step-item.active .step-circle {
+            background: #2EC9B5;
+            border-color: #2EC9B5;
+            color: #fff;
+        }
+
+        .step-label {
+            margin-left: 8px;
+            font-size: 14px;
+            color: #ddd;
+        }
+
+        .step-item.active .step-label {
+            color: #333;
+        }
+
+        .step-line {
+            width: 60px;
+            height: 1px;
+            background: #ddd;
+            margin: 0 8px;
+        }
+
+        .step-item.active .step-line {
+            background: #2EC9B5;
+        }
+
+        /* 表单 */
+        .form-content {
+            padding: 24px 40px;
+        }
+
+        .form-row {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            width: 140px;
+            padding-top: 8px;
+            font-size: 14px;
+            color: #333;
+            flex-shrink: 0;
+        }
+
+        .form-label.required::before {
+            content: '*';
+            color: #ff4d4f;
+            margin-right: 4px;
+        }
+
+        .form-input {
+            flex: 1;
+        }
+
+        /* 输入框 */
+        .input-box, .select-box {
+            height: 36px;
+            padding: 0 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #333;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-box:focus, .select-box:focus {
+            border-color: #2EC9B5;
+        }
+
+        .input-box::placeholder {
+            color: #999;
+        }
+
+        .select-box {
+            width: 280px;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .input-long {
+            width: 100%;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .input-hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        /* 单选按钮 */
+        .radio-group {
+            display: flex;
+            gap: 24px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .radio-item input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #2EC9B5;
+        }
+
+        .radio-item label {
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* 富文本编辑器 */
+        .rich-editor {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-bottom: 1px solid #eee;
+            background: #fafafa;
+        }
+
+        .toolbar-icons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .toolbar-icon {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toolbar-icon:hover {
+            color: #2EC9B5;
+        }
+
+        .char-count {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .editor-content {
+            min-height: 200px;
+            padding: 12px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .editor-content::placeholder {
+            color: #999;
+        }
+
+        .editor-footer {
+            border-top: 1px solid #eee;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* 作文要点 */
+        .points-section {
+            margin-bottom: 20px;
+        }
+
+        .points-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .points-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .points-label::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: #2EC9B5;
+            border-radius: 2px;
+        }
+
+        .ai-btn-small {
+            padding: 4px 12px;
+            background: #a0a0a0;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .ai-btn-small:hover {
+            background: #888;
+        }
+
+        .points-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .point-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .point-number {
+            width: 24px;
+            font-size: 14px;
+            color: #333;
+            text-align: right;
+        }
+
+        .point-input {
+            flex: 1;
+            height: 36px;
+            padding: 0 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .point-input:focus {
+            border-color: #2EC9B5;
+        }
+
+        .point-delete {
+            color: #ff4d4f;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        .point-delete:hover {
+            text-decoration: underline;
+        }
+
+        .add-point {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #2EC9B5;
+            font-size: 13px;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .add-point:hover {
+            text-decoration: underline;
+        }
+
+        /* 范文 */
+        .model-essay-section {
+            margin-bottom: 20px;
+        }
+
+        .model-essay-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .model-essay-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .model-essay-label::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: #2EC9B5;
+            border-radius: 2px;
+        }
+
+        .model-essay-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: vertical;
+            outline: none;
+            font-family: inherit;
+            line-height: 1.8;
+        }
+
+        .model-essay-textarea:focus {
+            border-color: #2EC9B5;
+        }
+
+        .ocr-link {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-top: 12px;
+        }
+
+        .ocr-link-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #2EC9B5;
+            font-size: 13px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .ocr-link-item:hover {
+            opacity: 0.8;
+        }
+
+        .ocr-link-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* 底部按钮 */
+        .form-actions {
+            display: flex;
+            justify-content: center;
+            padding: 24px;
+            padding-top: 16px;
+        }
+
+        .submit-btn {
+            width: 120px;
+            height: 40px;
+            background: #2EC9B5;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: #25a89a;
+        }
+
+        /* AI 生成弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .ai-modal {
+            background: #fff;
+            border-radius: 8px;
+            width: 500px;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .ai-modal-title {
+            font-size: 16px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ai-badge {
+            background: #2EC9B5;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .ai-modal-close {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #999;
+            font-size: 20px;
+        }
+
+        .ai-modal-body {
+            padding: 20px;
+        }
+
+        .ai-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .ai-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f0f0f0;
+            border-top-color: #2EC9B5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .ai-loading-text {
+            margin-top: 16px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .ai-result {
+            display: none;
+        }
+
+        .ai-result.active {
+            display: block;
+        }
+
+        .ai-result-content {
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 16px;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #333;
+            margin-bottom: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .ai-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .ai-action-btn {
+            padding: 8px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            background: #fff;
+            color: #333;
+            transition: all 0.3s;
+        }
+
+        .ai-action-btn:hover {
+            border-color: #2EC9B5;
+            color: #2EC9B5;
+        }
+
+        .ai-action-btn.primary {
+            background: #2EC9B5;
+            border-color: #2EC9B5;
+            color: #fff;
+        }
+
+        .ai-action-btn.primary:hover {
+            background: #25a89a;
+        }
+
+        /* 图片转文字弹窗 */
+        .ocr-modal {
+            background: #fff;
+            border-radius: 8px;
+            width: 500px;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ocr-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .ocr-modal-title {
+            font-size: 16px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ocr-modal-body {
+            padding: 20px;
+        }
+
+        .ocr-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+
+        .ocr-upload-area:hover {
+            border-color: #2EC9B5;
+            background: #f0f9f7;
+        }
+
+        .ocr-upload-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .ocr-upload-text {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .ocr-upload-hint {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .ocr-preview {
+            display: none;
+            margin-bottom: 16px;
+        }
+
+        .ocr-preview.active {
+            display: block;
+        }
+
+        .ocr-preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .ocr-result-area {
+            display: none;
+        }
+
+        .ocr-result-area.active {
+            display: block;
+        }
+
+        .ocr-result-label {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ocr-result-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: vertical;
+            outline: none;
+            font-family: inherit;
+            line-height: 1.8;
+            margin-bottom: 16px;
+        }
+
+        .ocr-result-textarea:focus {
+            border-color: #2EC9B5;
+        }
+
+        .ocr-loading {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .ocr-loading.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <div class="modal">
+        <!-- 标题栏 -->
+        <div class="modal-header">
+            <div class="modal-title">发布英语作文批改任务</div>
+            <div class="modal-close" onclick="alert('关闭弹窗')">×</div>
+        </div>
+
+        <!-- 步骤条 -->
+        <div class="steps">
+            <div class="step-item active">
+                <div class="step-circle">1</div>
+                <div class="step-label">配置任务信息</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step-item">
+                <div class="step-circle">2</div>
+                <div class="step-label">选择学生/班级</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step-item">
+                <div class="step-circle">3</div>
+                <div class="step-label">设置发布时间</div>
+            </div>
+        </div>
+
+        <!-- 表单内容 -->
+        <div class="form-content">
+            <!-- 学届 -->
+            <div class="form-row">
+                <label class="form-label required">学届</label>
+                <div class="form-input">
+                    <select class="select-box">
+                        <option>2025-2026</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 任务名称 -->
+            <div class="form-row">
+                <label class="form-label required">任务名称</label>
+                <div class="form-input">
+                    <input type="text" class="input-box input-long" placeholder="请输入 1~100 个字">
+                </div>
+            </div>
+
+            <!-- 课程 -->
+            <div class="form-row">
+                <label class="form-label required">课程</label>
+                <div class="form-input">
+                    <div class="input-row">
+                        <select class="select-box" style="width: 200px;">
+                            <option>流程测试 0901</option>
+                        </select>
+                        <select class="select-box" style="flex: 1;">
+                            <option>请选择</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 练习类型 -->
+            <div class="form-row">
+                <label class="form-label required">练习类型</label>
+                <div class="form-input">
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="type1" name="type">
+                            <label for="type1">课前测</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="type2" name="type">
+                            <label for="type2">堂练</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="type3" name="type">
+                            <label for="type3">出门测</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="type4" name="type" checked>
+                            <label for="type4">作业</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 作文体裁 -->
+            <div class="form-row">
+                <label class="form-label required">作文体裁</label>
+                <div class="form-input">
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="genre1" name="genre">
+                            <label for="genre1">初中</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="genre2" name="genre" checked>
+                            <label for="genre2">应用文</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 作文满分 -->
+            <div class="form-row">
+                <label class="form-label required">作文满分</label>
+                <div class="form-input">
+                    <div class="input-row" style="align-items: center;">
+                        <input type="text" class="input-box" placeholder="请输入作文满分" style="width: 200px;">
+                        <span class="input-hint">设置作文满分（填写＞0 且&lt;=1000 的整数）</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 字数要求 -->
+            <div class="form-row">
+                <label class="form-label required">字数要求</label>
+                <div class="form-input">
+                    <div class="input-row" style="align-items: center;">
+                        <input type="text" class="input-box" placeholder="请输入字数要求" style="width: 200px;">
+                        <span class="input-hint">设置学生手写的最低字数（填写＞0 的整数）</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 作文材料与要求 -->
+            <div class="form-row">
+                <label class="form-label required">作文材料与要求</label>
+                <div class="form-input">
+                    <div class="rich-editor">
+                        <div class="editor-toolbar">
+                            <div class="toolbar-icons">
+                                <div class="toolbar-icon">🖼️</div>
+                                <div class="toolbar-icon">⬅️</div>
+                                <div class="toolbar-icon">↔️</div>
+                                <div class="toolbar-icon">➡️</div>
+                                <div class="toolbar-icon">☰</div>
+                            </div>
+                            <div class="char-count">0/2000</div>
+                        </div>
+                        <div class="editor-content" contenteditable="true" placeholder="请输入或粘贴这篇作文的题干内容、配套材料或学生写作要求，最多支持输出 2000 字"></div>
+                        <div class="editor-footer">P</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 作文要点（新增） -->
+            <div class="form-row">
+                <label class="form-label">作文要点</label>
+                <div class="form-input">
+                    <div class="points-list" id="pointsList">
+                        <div class="point-item">
+                            <span class="point-number">1.</span>
+                            <input type="text" class="point-input" placeholder="请输入要点内容">
+                            <span class="point-delete" onclick="deletePoint(this)">删除</span>
+                        </div>
+                        <div class="point-item">
+                            <span class="point-number">2.</span>
+                            <input type="text" class="point-input" placeholder="请输入要点内容">
+                            <span class="point-delete" onclick="deletePoint(this)">删除</span>
+                        </div>
+                        <div class="point-item">
+                            <span class="point-number">3.</span>
+                            <input type="text" class="point-input" placeholder="请输入要点内容">
+                            <span class="point-delete" onclick="deletePoint(this)">删除</span>
+                        </div>
+                    </div>
+                    <div class="add-point" onclick="addPoint()">+ 新增要点</div>
+                </div>
+            </div>
+
+            <!-- 题目范文（新增） -->
+            <div class="form-row">
+                <label class="form-label">题目范文</label>
+                <div class="form-input">
+                    <div class="model-essay-header">
+                    
+                    </div>
+                    <textarea class="model-essay-textarea" placeholder="请输入题目范文内容，或使用下方功能快速生成"></textarea>
+                    <div class="ocr-link">
+                        <div class="ocr-link-item" onclick="openAIModal('essay')">
+                            <svg class="ocr-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                            </svg>
+                            AI 生成范文
+                        </div>
+                        <div class="ocr-link-item" onclick="openOCRModal()">
+                            <svg class="ocr-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                            图片转文字
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div class="form-actions">
+            <button class="submit-btn">下一步</button>
+        </div>
+    </div>
+
+    <!-- AI 生成弹窗 -->
+    <div class="modal-overlay" id="aiModal">
+        <div class="ai-modal">
+            <div class="ai-modal-header">
+                <div class="ai-modal-title">
+                    <span>✨</span>
+                    AI 生成
+                    <span class="ai-badge">智能</span>
+                </div>
+                <div class="ai-modal-close" onclick="closeAIModal()">×</div>
+            </div>
+            <div class="ai-modal-body">
+                <!-- 加载状态 -->
+                <div class="ai-loading" id="aiLoading">
+                    <div class="ai-spinner"></div>
+                    <div class="ai-loading-text">AI 正在生成中，请稍候...</div>
+                </div>
+
+                <!-- 生成结果 -->
+                <div class="ai-result" id="aiResult">
+                    <div class="ai-result-content" id="aiResultContent">
+                    </div>
+                    <div class="ai-actions">
+                        <button class="ai-action-btn" onclick="regenerate()">🔄 重新生成</button>
+                        <button class="ai-action-btn primary" onclick="citeResult()">✓ 引用</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片转文字弹窗 -->
+    <div class="modal-overlay" id="ocrModal">
+        <div class="ocr-modal">
+            <div class="ocr-modal-header">
+                <div class="ocr-modal-title">
+                    🖼️ 图片转文字
+                </div>
+                <div class="ai-modal-close" onclick="closeOCRModal()">×</div>
+            </div>
+            <div class="ocr-modal-body">
+                <!-- 上传区域 -->
+                <div class="ocr-upload-area" id="ocrUploadArea" onclick="document.getElementById('ocrFileInput').click()">
+                    <div class="ocr-upload-icon">📷</div>
+                    <div class="ocr-upload-text">点击上传图片</div>
+                    <div class="ocr-upload-hint">支持 JPG、PNG 格式，文件大小不超过 5MB</div>
+                    <input type="file" id="ocrFileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                </div>
+
+                <!-- 预览区域 -->
+                <div class="ocr-preview" id="ocrPreview">
+                    <img class="ocr-preview-image" id="ocrPreviewImage" src="" alt="预览图片">
+                    <div class="ai-actions" style="margin-top: 16px;">
+                        <button class="ai-action-btn" onclick="resetUpload()">重新上传</button>
+                        <button class="ai-action-btn primary" onclick="startOCR()">开始识别</button>
+                    </div>
+                </div>
+
+                <!-- 识别中 -->
+                <div class="ocr-loading" id="ocrLoading">
+                    <div class="ai-spinner"></div>
+                    <div class="ai-loading-text">正在识别图片文字，请稍候...</div>
+                </div>
+
+                <!-- 识别结果 -->
+                <div class="ocr-result-area" id="ocrResult">
+                    <div class="ocr-result-label">
+                        <span>识别结果：</span>
+                        <span style="font-size: 12px; color: #999;">可编辑后引用到范文</span>
+                    </div>
+                    <textarea class="ocr-result-textarea" id="ocrResultText" placeholder="识别结果将显示在这里..."></textarea>
+                    <div class="ai-actions">
+                        <button class="ai-action-btn" onclick="resetOCR()">重新识别</button>
+                        <button class="ai-action-btn primary" onclick="citeOCRResult()">✓ 引用到范文</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTarget = '';
+        let ocrSelectedFile = null;
+
+        // 删除要点
+        function deletePoint(element) {
+            const pointItem = element.closest('.point-item');
+            pointItem.remove();
+            // 重新编号
+            const points = document.querySelectorAll('.point-item');
+            points.forEach((point, index) => {
+                point.querySelector('.point-number').textContent = (index + 1) + '.';
+            });
+        }
+
+        // 新增要点
+        function addPoint() {
+            const pointsList = document.getElementById('pointsList');
+            const count = pointsList.querySelectorAll('.point-item').length + 1;
+            const newPoint = document.createElement('div');
+            newPoint.className = 'point-item';
+            newPoint.innerHTML = `
+                <span class="point-number">${count}.</span>
+                <input type="text" class="point-input" placeholder="请输入要点内容">
+                <span class="point-delete" onclick="deletePoint(this)">删除</span>
+            `;
+            pointsList.appendChild(newPoint);
+        }
+
+        // 打开 AI 弹窗
+        function openAIModal(target) {
+            currentTarget = target;
+            document.getElementById('aiModal').classList.add('active');
+
+            // 重置状态
+            document.getElementById('aiLoading').style.display = 'flex';
+            document.getElementById('aiResult').classList.remove('active');
+
+            // 设置内容
+            const resultContent = document.getElementById('aiResultContent');
+            if (target === 'points') {
+                resultContent.innerHTML = `
+                    <strong>作文要点建议：</strong><br><br>
+                    1. 明确写作目的和对象（如：申请信需说明申请事项）<br>
+                    2. 使用恰当的书信格式（称呼、正文、结尾、署名）<br>
+                    3. 包含所有要点提示内容<br>
+                    4. 使用得体的语言表达（正式/非正式）<br>
+                    5. 字数控制在 80-100 词之间
+                `;
+            } else {
+                resultContent.innerHTML = `
+                    <strong>参考范文：</strong><br><br>
+                    Dear Sir/Madam,<br><br>
+                    I am writing to apply for the position of volunteer teacher advertised on your website. I believe I am well qualified for this position.<br><br>
+                    I am a college student majoring in English. With good English proficiency and strong communication skills, I have previous experience in teaching children. Moreover, I am patient and responsible, which makes me popular among students.<br><br>
+                    I would appreciate the opportunity to contribute to your program. Please feel free to contact me for further information.<br><br>
+                    Yours sincerely,<br>
+                    Li Hua
+                `;
+            }
+
+            // 模拟 AI 生成
+            setTimeout(() => {
+                document.getElementById('aiLoading').style.display = 'none';
+                document.getElementById('aiResult').classList.add('active');
+            }, 1500);
+        }
+
+        // 关闭 AI 弹窗
+        function closeAIModal() {
+            document.getElementById('aiModal').classList.remove('active');
+        }
+
+        // 重新生成
+        function regenerate() {
+            document.getElementById('aiLoading').style.display = 'flex';
+            document.getElementById('aiResult').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('aiLoading').style.display = 'none';
+                document.getElementById('aiResult').classList.add('active');
+            }, 1500);
+        }
+
+        // 引用
+        function citeResult() {
+            const content = document.getElementById('aiResultContent').innerText;
+            if (currentTarget === 'points') {
+                // 引用到要点
+                const pointsList = document.getElementById('pointsList');
+                pointsList.innerHTML = '';
+                const lines = content.split('\n').filter(line => line.trim() && !line.includes('作文要点建议'));
+                lines.forEach((line, index) => {
+                    const text = line.replace(/^\d+\.\s*/, '').trim();
+                    if (text) {
+                        const newPoint = document.createElement('div');
+                        newPoint.className = 'point-item';
+                        newPoint.innerHTML = `
+                            <span class="point-number">${index + 1}.</span>
+                            <input type="text" class="point-input" value="${text}">
+                            <span class="point-delete" onclick="deletePoint(this)">删除</span>
+                        `;
+                        pointsList.appendChild(newPoint);
+                    }
+                });
+            } else {
+                // 引用到范文
+                const contentText = content.replace('参考范文：', '').trim();
+                document.querySelector('.model-essay-textarea').value = contentText;
+            }
+            closeAIModal();
+        }
+
+        // 点击遮罩关闭
+        document.getElementById('aiModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAIModal();
+            }
+        });
+
+        // ========== 图片转文字功能 ==========
+
+        // 打开 OCR 弹窗
+        function openOCRModal() {
+            document.getElementById('ocrModal').classList.add('active');
+            resetOCR();
+        }
+
+        // 关闭 OCR 弹窗
+        function closeOCRModal() {
+            document.getElementById('ocrModal').classList.remove('active');
+        }
+
+        // 处理文件选择
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                ocrSelectedFile = file;
+                // 显示预览
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('ocrPreviewImage').src = e.target.result;
+                    document.getElementById('ocrUploadArea').style.display = 'none';
+                    document.getElementById('ocrPreview').classList.add('active');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // 重新上传
+        function resetUpload() {
+            ocrSelectedFile = null;
+            document.getElementById('ocrFileInput').value = '';
+            document.getElementById('ocrUploadArea').style.display = 'block';
+            document.getElementById('ocrPreview').classList.remove('active');
+        }
+
+        // 开始 OCR 识别
+        function startOCR() {
+            if (!ocrSelectedFile) {
+                alert('请先选择图片');
+                return;
+            }
+
+            // 显示加载状态
+            document.getElementById('ocrPreview').classList.remove('active');
+            document.getElementById('ocrLoading').classList.add('active');
+
+            // 模拟 OCR 识别（实际使用时需要调用 OCR API）
+            setTimeout(() => {
+                document.getElementById('ocrLoading').classList.remove('active');
+                document.getElementById('ocrResult').classList.add('active');
+
+                // 模拟识别结果
+                document.getElementById('ocrResultText').value = `Dear Sir/Madam,
+
+I am writing to apply for the position of volunteer teacher advertised on your website. I believe I am well qualified for this position.
+
+I am a college student majoring in English. With good English proficiency and strong communication skills, I have previous experience in teaching children. Moreover, I am patient and responsible, which makes me popular among students.
+
+I would appreciate the opportunity to contribute to your program. Please feel free to contact me for further information.
+
+Yours sincerely,
+Li Hua`;
+            }, 2000);
+        }
+
+        // 重新识别
+        function resetOCR() {
+            ocrSelectedFile = null;
+            document.getElementById('ocrFileInput').value = '';
+            document.getElementById('ocrUploadArea').style.display = 'block';
+            document.getElementById('ocrPreview').classList.remove('active');
+            document.getElementById('ocrLoading').classList.remove('active');
+            document.getElementById('ocrResult').classList.remove('active');
+            document.getElementById('ocrResultText').value = '';
+        }
+
+        // 引用 OCR 结果到范文
+        function citeOCRResult() {
+            const content = document.getElementById('ocrResultText').value;
+            document.querySelector('.model-essay-textarea').value = content;
+            closeOCRModal();
+        }
+
+        // 点击遮罩关闭 OCR 弹窗
+        document.getElementById('ocrModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeOCRModal();
+            }
+        });
+    </script>
+</body>
+</html>
