@@ -124,6 +124,10 @@
             flex-shrink: 0;
         }
 
+        .form-label.label-radio {
+            padding-top: 0;
+        }
+
         .form-label.required::before {
             content: '*';
             color: #ff4d4f;
@@ -151,6 +155,7 @@
         }
 
         .input-box::placeholder {
+            font-size: 12px;
             color: #999;
         }
 
@@ -241,13 +246,14 @@
         }
 
         .editor-content {
-            min-height: 200px;
+            min-height: 133px;
             padding: 12px;
             font-size: 14px;
             color: #333;
         }
 
         .editor-content::placeholder {
+            font-size: 12px;
             color: #999;
         }
 
@@ -258,7 +264,7 @@
             color: #999;
         }
 
-        /* 作文要点 */
+        /* 作文要点 - 已屏蔽开始
         .points-section {
             margin-bottom: 20px;
         }
@@ -359,7 +365,7 @@
 
         .add-point:hover {
             text-decoration: underline;
-        }
+        } */
 
         /* 范文 */
         .model-essay-section {
@@ -389,9 +395,42 @@
             border-radius: 2px;
         }
 
+        /* 自定义批改要求 */
+        .requirement-section {
+            margin-bottom: 20px;
+        }
+
+        .requirement-textarea {
+            width: 100%;
+            min-height: 66px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .requirement-textarea:focus {
+            border-color: #2EC9B5;
+        }
+
+        .requirement-textarea::placeholder {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .char-count {
+            text-align: right;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #999;
+        }
         .model-essay-textarea {
             width: 100%;
-            min-height: 150px;
+            min-height: 66px;
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -404,6 +443,11 @@
 
         .model-essay-textarea:focus {
             border-color: #2EC9B5;
+        }
+
+        .model-essay-textarea::placeholder {
+            font-size: 12px;
+            color: #999;
         }
 
         .ocr-link {
@@ -873,8 +917,8 @@
                 </div>
             </div>
 
-            <!-- 作文要点（新增） -->
-            <div class="form-row">
+            <!-- 作文要点（已屏蔽）-->
+            <!-- <div class="form-row">
                 <label class="form-label">作文要点</label>
                 <div class="form-input">
                     <div class="points-list" id="pointsList">
@@ -895,6 +939,34 @@
                         </div>
                     </div>
                     <div class="add-point" onclick="addPoint()">+ 新增要点</div>
+                </div>
+            </div> -->
+
+
+            <!-- 自定义批改要求（已屏蔽）
+            <div class="form-row">
+                <label class="form-label">自定义批改要求</label>
+                <div class="form-input">
+                    <textarea class="requirement-textarea" id="customRequirements" maxlength="200" placeholder="中高考通用批改标准已内置，无须额外输入。如您有额外的批改要求，请在此填写，不超过5条，整体不超过200字。"></textarea>
+                    <div class="char-count"><span id="charCount">0</span>/200</div>
+                </div>
+            </div>
+            -->
+
+            <!-- 评分模式 -->
+            <div class="form-row">
+                <label class="form-label label-radio">评分模式</label>
+                <div class="form-input">
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="scoreMode1" name="scoreMode" value="normal" checked>
+                            <label for="scoreMode1">正常（中高考评分标准）</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="scoreMode2" name="scoreMode" value="loose">
+                            <label for="scoreMode2">宽松（鼓励式评分）</label>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1016,8 +1088,8 @@
         let currentTarget = '';
         let ocrSelectedFile = null;
 
-        // 删除要点
-        function deletePoint(element) {
+        // 删除要点 - 已屏蔽
+        /* function deletePoint(element) {
             const pointItem = element.closest('.point-item');
             pointItem.remove();
             // 重新编号
@@ -1025,10 +1097,10 @@
             points.forEach((point, index) => {
                 point.querySelector('.point-number').textContent = (index + 1) + '.';
             });
-        }
+        } */
 
-        // 新增要点
-        function addPoint() {
+        // 新增要点 - 已屏蔽
+        /* function addPoint() {
             const pointsList = document.getElementById('pointsList');
             const count = pointsList.querySelectorAll('.point-item').length + 1;
             const newPoint = document.createElement('div');
@@ -1039,7 +1111,7 @@
                 <span class="point-delete" onclick="deletePoint(this)">删除</span>
             `;
             pointsList.appendChild(newPoint);
-        }
+        } */
 
         // 打开 AI 弹窗
         function openAIModal(target) {
