@@ -428,28 +428,6 @@
             font-size: 12px;
             color: #999;
         }
-        .model-essay-textarea {
-            width: 100%;
-            min-height: 66px;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            resize: vertical;
-            outline: none;
-            font-family: inherit;
-            line-height: 1.8;
-        }
-
-        .model-essay-textarea:focus {
-            border-color: #2EC9B5;
-        }
-
-        .model-essay-textarea::placeholder {
-            font-size: 12px;
-            color: #999;
-        }
-
         .ocr-link {
             display: flex;
             align-items: center;
@@ -769,6 +747,19 @@
         .ocr-loading.active {
             display: flex;
         }
+
+        /* 范文富文本编辑器 */
+        .model-essay-editor .editor-content {
+            min-height: 133px;
+        }
+
+        .model-essay-editor .editor-content img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 8px 0;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -970,14 +961,22 @@
                 </div>
             </div>
 
-            <!-- 题目范文（新增） -->
+            <!-- 题目范文 -->
             <div class="form-row">
                 <label class="form-label">题目范文</label>
                 <div class="form-input">
                     <div class="model-essay-header">
-                    
+
                     </div>
-                    <textarea class="model-essay-textarea" placeholder="请输入题目范文内容，或使用下方功能快速生成"></textarea>
+                    <div class="rich-editor model-essay-editor">
+                        <div class="editor-toolbar">
+                            <div class="toolbar-icons">
+                                <div class="toolbar-icon" onclick="insertModelImage()" title="插入图片">🖼️</div>
+                            </div>
+                            <div class="char-count">0/2000</div>
+                        </div>
+                        <div class="editor-content model-editor-content" contenteditable="true" placeholder="请输入题目范文内容，或使用下方功能快速生成" id="modelEssayContent"></div>
+                    </div>
                     <div class="ocr-link">
                         <div class="ocr-link-item" onclick="openAIModal('essay')">
                             <svg class="ocr-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -985,15 +984,8 @@
                             </svg>
                             AI 生成范文
                         </div>
-                        <div class="ocr-link-item" onclick="openOCRModal()">
-                            <svg class="ocr-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                <circle cx="8.5" cy="8.5" r="1.5"/>
-                                <polyline points="21 15 16 10 5 21"/>
-                            </svg>
-                            图片转文字
-                        </div>
                     </div>
+                    <input type="file" id="modelEssayFileInput" accept="image/*" style="display: none;" onchange="handleModelEssayImageUpload(event)">
                 </div>
             </div>
         </div>
@@ -1035,58 +1027,34 @@
         </div>
     </div>
 
-    <!-- 图片转文字弹窗 -->
-    <div class="modal-overlay" id="ocrModal">
-        <div class="ocr-modal">
-            <div class="ocr-modal-header">
-                <div class="ocr-modal-title">
-                    🖼️ 图片转文字
-                </div>
-                <div class="ai-modal-close" onclick="closeOCRModal()">×</div>
-            </div>
-            <div class="ocr-modal-body">
-                <!-- 上传区域 -->
-                <div class="ocr-upload-area" id="ocrUploadArea" onclick="document.getElementById('ocrFileInput').click()">
-                    <div class="ocr-upload-icon">📷</div>
-                    <div class="ocr-upload-text">点击上传图片</div>
-                    <div class="ocr-upload-hint">支持 JPG、PNG 格式，文件大小不超过 5MB</div>
-                    <input type="file" id="ocrFileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
-                </div>
-
-                <!-- 预览区域 -->
-                <div class="ocr-preview" id="ocrPreview">
-                    <img class="ocr-preview-image" id="ocrPreviewImage" src="" alt="预览图片">
-                    <div class="ai-actions" style="margin-top: 16px;">
-                        <button class="ai-action-btn" onclick="resetUpload()">重新上传</button>
-                        <button class="ai-action-btn primary" onclick="startOCR()">开始识别</button>
-                    </div>
-                </div>
-
-                <!-- 识别中 -->
-                <div class="ocr-loading" id="ocrLoading">
-                    <div class="ai-spinner"></div>
-                    <div class="ai-loading-text">正在识别图片文字，请稍候...</div>
-                </div>
-
-                <!-- 识别结果 -->
-                <div class="ocr-result-area" id="ocrResult">
-                    <div class="ocr-result-label">
-                        <span>识别结果：</span>
-                        <span style="font-size: 12px; color: #999;">可编辑后引用到范文</span>
-                    </div>
-                    <textarea class="ocr-result-textarea" id="ocrResultText" placeholder="识别结果将显示在这里..."></textarea>
-                    <div class="ai-actions">
-                        <button class="ai-action-btn" onclick="resetOCR()">重新识别</button>
-                        <button class="ai-action-btn primary" onclick="citeOCRResult()">✓ 引用到范文</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
         let currentTarget = '';
-        let ocrSelectedFile = null;
+
+        // 插入范文图片
+        function insertModelImage() {
+            document.getElementById('modelEssayFileInput').click();
+        }
+
+        // 处理范文图片上传
+        function handleModelEssayImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const editorContent = document.getElementById('modelEssayContent');
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.maxWidth = '100%';
+                    img.style.height = 'auto';
+                    img.style.display = 'block';
+                    img.style.margin = '8px 0';
+                    img.style.borderRadius = '4px';
+                    editorContent.appendChild(img);
+                    event.target.value = '';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
 
         // 删除要点 - 已屏蔽
         /* function deletePoint(element) {
@@ -1191,7 +1159,7 @@
             } else {
                 // 引用到范文
                 const contentText = content.replace('参考范文：', '').trim();
-                document.querySelector('.model-essay-textarea').value = contentText;
+                document.getElementById('modelEssayContent').innerHTML = contentText.replace(/\n/g, '<br>');
             }
             closeAIModal();
         }
@@ -1200,98 +1168,6 @@
         document.getElementById('aiModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeAIModal();
-            }
-        });
-
-        // ========== 图片转文字功能 ==========
-
-        // 打开 OCR 弹窗
-        function openOCRModal() {
-            document.getElementById('ocrModal').classList.add('active');
-            resetOCR();
-        }
-
-        // 关闭 OCR 弹窗
-        function closeOCRModal() {
-            document.getElementById('ocrModal').classList.remove('active');
-        }
-
-        // 处理文件选择
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (file) {
-                ocrSelectedFile = file;
-                // 显示预览
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('ocrPreviewImage').src = e.target.result;
-                    document.getElementById('ocrUploadArea').style.display = 'none';
-                    document.getElementById('ocrPreview').classList.add('active');
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // 重新上传
-        function resetUpload() {
-            ocrSelectedFile = null;
-            document.getElementById('ocrFileInput').value = '';
-            document.getElementById('ocrUploadArea').style.display = 'block';
-            document.getElementById('ocrPreview').classList.remove('active');
-        }
-
-        // 开始 OCR 识别
-        function startOCR() {
-            if (!ocrSelectedFile) {
-                alert('请先选择图片');
-                return;
-            }
-
-            // 显示加载状态
-            document.getElementById('ocrPreview').classList.remove('active');
-            document.getElementById('ocrLoading').classList.add('active');
-
-            // 模拟 OCR 识别（实际使用时需要调用 OCR API）
-            setTimeout(() => {
-                document.getElementById('ocrLoading').classList.remove('active');
-                document.getElementById('ocrResult').classList.add('active');
-
-                // 模拟识别结果
-                document.getElementById('ocrResultText').value = `Dear Sir/Madam,
-
-I am writing to apply for the position of volunteer teacher advertised on your website. I believe I am well qualified for this position.
-
-I am a college student majoring in English. With good English proficiency and strong communication skills, I have previous experience in teaching children. Moreover, I am patient and responsible, which makes me popular among students.
-
-I would appreciate the opportunity to contribute to your program. Please feel free to contact me for further information.
-
-Yours sincerely,
-Li Hua`;
-            }, 2000);
-        }
-
-        // 重新识别
-        function resetOCR() {
-            ocrSelectedFile = null;
-            document.getElementById('ocrFileInput').value = '';
-            document.getElementById('ocrUploadArea').style.display = 'block';
-            document.getElementById('ocrPreview').classList.remove('active');
-            document.getElementById('ocrLoading').classList.remove('active');
-            document.getElementById('ocrResult').classList.remove('active');
-            document.getElementById('ocrResultText').value = '';
-        }
-
-        // 引用 OCR 结果到范文
-        function citeOCRResult() {
-            const content = document.getElementById('ocrResultText').value;
-            document.querySelector('.model-essay-textarea').value = content;
-            closeOCRModal();
-        }
-
-        // 点击遮罩关闭 OCR 弹窗
-        document.getElementById('ocrModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeOCRModal();
             }
         });
     </script>
