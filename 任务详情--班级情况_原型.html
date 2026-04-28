@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>任务详情--班级情况</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f5f7fa;
+    color: #303133;
+    min-height: 100vh;
+  }
+
+  /* ========== 顶部导航 ========== */
+  .top-bar {
+    height: 56px;
+    background: #fff;
+    border-bottom: 1px solid #e4e7ed;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .top-bar .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 48px;
+    cursor: pointer;
+  }
+  .top-bar .logo {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1AC2A3;
+  }
+  .top-bar .logo-divider {
+    font-size: 14px;
+    color: #606266;
+    margin: 0 2px;
+  }
+  .top-bar .logo-product {
+    font-size: 14px;
+    color: #606266;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .top-bar .nav-center {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex: 1;
+  }
+  .top-bar .nav-item {
+    font-size: 14px;
+    color: #606266;
+    cursor: pointer;
+    height: 56px;
+    line-height: 56px;
+    padding: 0 18px;
+    position: relative;
+    white-space: nowrap;
+  }
+  .top-bar .nav-item:hover { color: #1AC2A3; }
+  .top-bar .nav-item.active {
+    color: #1AC2A3;
+    font-weight: 600;
+  }
+  .top-bar .nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 3px;
+    background: #1AC2A3;
+    border-radius: 2px;
+  }
+  .top-bar .nav-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: #909399;
+  }
+  .top-bar .nav-right .bell { cursor: pointer; font-size: 16px; color: #909399; }
+  .top-bar .nav-right .user-name { color: #606266; cursor: pointer; }
+  .top-bar .nav-right .logout { color: #1AC2A3; cursor: pointer; }
+
+  /* ========== 面包屑 ========== */
+  .breadcrumb {
+    padding: 14px 24px 0;
+    max-width: 1200px;
+    margin: 0 auto;
+    font-size: 13px;
+    color: #909399;
+  }
+  .breadcrumb a { color: #909399; text-decoration: none; }
+  .breadcrumb a:hover { color: #1AC2A3; }
+  .breadcrumb .sep { color: #c0c4cc; margin: 0 6px; }
+  .breadcrumb .current { color: #303133; }
+
+  /* 主内容区 */
+  .main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 12px 24px 40px;
+  }
+
+  /* ========== 任务信息卡片 ========== */
+  .task-info-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .task-info-row-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .task-class-select {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .task-class-select .arrow { font-size: 10px; color: #909399; }
+  .task-info-row {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    font-size: 13px;
+    flex-wrap: wrap;
+  }
+  .task-info-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .task-info-item .label { color: #909399; }
+  .task-info-item .value { color: #303133; font-weight: 500; }
+  .task-info-item .value.link { color: #67c23a; cursor: pointer; }
+  .task-info-item .value.link:hover { text-decoration: underline; }
+
+  /* ========== Tab导航 ========== */
+  .tab-bar {
+    display: flex;
+    background: #fff;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    margin-top: 0;
+  }
+  .tab-item {
+    padding: 14px 28px;
+    font-size: 14px;
+    color: #606266;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .tab-item.active {
+    color: #1AC2A3;
+    border-bottom-color: #1AC2A3;
+    font-weight: 600;
+  }
+  .tab-item:hover { color: #1AC2A3; }
+
+  /* ========== 统计行 ========== */
+  .stats-section {
+    background: #fff;
+    padding: 20px;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    margin-bottom: 16px;
+  }
+  .stats-row {
+    display: flex;
+    gap: 0;
+  }
+  .stat-group {
+    flex: 1;
+    display: flex;
+  }
+  .stat-group:first-child {
+    background: #f5f7fa;
+    border-radius: 8px;
+    padding: 8px 0;
+  }
+  .stat-group:last-child {
+    margin-left: 20px;
+    background: linear-gradient(135deg, #e8f8f4, #d5f5ed);
+    border-radius: 8px;
+    padding: 8px 0;
+  }
+  .stat-item {
+    flex: 1;
+    text-align: center;
+    padding: 0 12px;
+  }
+  .stat-item .stat-label {
+    font-size: 13px;
+    color: #909399;
+    margin-bottom: 8px;
+  }
+  .stat-item .stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #303133;
+  }
+
+  /* ========== 双列布局 ========== */
+  .two-col {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .col-left { flex: 1; min-width: 0; }
+  .col-right { flex: 0 0 520px; }
+  .col-left .card, .col-right .card { height: 100%; display: flex; flex-direction: column; }
+  .col-left .card .card-body, .col-right .card .card-body { height: 200px; display: flex; flex-direction: column; }
+  .col-left .card .card-body .bar-chart-wrapper { flex: 1; }
+
+  /* ========== 通用卡片 ========== */
+  .card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #303133;
+  }
+  .card-body { padding: 20px; }
+
+  /* ========== 柱状图 ========== */
+  .bar-chart-wrapper {
+    position: relative;
+    width: 100%;
+    min-height: 180px;
+    flex: 1;
+  }
+  .bar-chart-wrapper canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ========== 表扬榜 ========== */
+  .praise-top-badge {
+    display: inline-block;
+    padding: 2px 12px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #909399;
+    font-weight: 500;
+  }
+  .praise-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .praise-card {
+    width: calc(25% - 9px);
+    min-width: 100px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .praise-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+  }
+  .praise-card .rank-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .praise-card {
+    position: relative;
+  }
+  .praise-card .rank-1 {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+  }
+  .praise-card .rank-2 {
+    background: linear-gradient(135deg, #C0C0C0, #A0A0A0);
+  }
+  .praise-card .rank-3 {
+    background: linear-gradient(135deg, #CD7F32, #B87333);
+  }
+  .praise-card .student-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 6px;
+  }
+  .praise-card .student-score {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .praise-card .score-gold { color: #F5A623; }
+  .praise-card .score-blue { color: #4A90D9; }
+  .praise-card .score-purple { color: #7B68EE; }
+
+  /* ========== 优秀作文 ========== */
+  .essays-section { margin-bottom: 16px; }
+  .essays-grid {
+    display: flex;
+    gap: 32px;
+  }
+  .essay-card {
+    cursor: pointer;
+    width: 300px;
+    flex-shrink: 0;
+  }
+  .essay-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .essay-header .essay-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #303133;
+  }
+  .essay-header .essay-score {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1AC2A3;
+  }
+  .essay-thumbs {
+    display: flex;
+    gap: 8px;
+  }
+  .essay-thumb {
+    flex: 1;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #f5f5f5;
+    transition: box-shadow 0.2s;
+    cursor: zoom-in;
+    aspect-ratio: 3/4;
+  }
+  .essay-thumb:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .essay-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* ========== 班级总结 ========== */
+  .summary-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .summary-action-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    border: 1px solid #dcdfe6;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #909399;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .summary-action-btn:hover {
+    border-color: #1AC2A3;
+    color: #1AC2A3;
+  }
+  .summary-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 12px;
+    margin-top: 20px;
+  }
+  .summary-section-title:first-child {
+    margin-top: 0;
+  }
+  .summary-content {
+    font-size: 14px;
+    line-height: 2;
+    color: #606266;
+  }
+  .summary-content .item {
+    margin-bottom: 12px;
+    padding-left: 4px;
+  }
+  .summary-content .item-title {
+    font-weight: 600;
+    color: #303133;
+  }
+  .summary-content .item-detail {
+    color: #606266;
+    margin-top: 4px;
+  }
+  .summary-content .item-detail .highlight {
+    color: #1AC2A3;
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== 顶部导航 ========== -->
+<div class="top-bar">
+  <div class="logo-area">
+    <div class="logo">鲸准教</div>
+    <span class="logo-divider">|</span>
+    <div class="logo-product">E教学 <span style="font-size:10px;color:#909399;">&#9660;</span></div>
+  </div>
+  <div class="nav-center">
+    <div class="nav-item">我的班级</div>
+    <div class="nav-item">备课</div>
+    <div class="nav-item">授课</div>
+    <div class="nav-item active">任务</div>
+    <div class="nav-item">学情</div>
+    <div class="nav-item">我的学习</div>
+    <div class="nav-item">资源平台</div>
+    <div class="nav-item" style="color:#1AC2A3;">Ai助教</div>
+  </div>
+  <div class="nav-right">
+    <span class="bell">&#128276;</span>
+    <span class="user-name">杨孟丹</span>
+    <span class="logout">退出</span>
+  </div>
+</div>
+
+<!-- 面包屑 -->
+<div class="breadcrumb">
+  <a href="#">首页</a>
+  <span class="sep">&gt;</span>
+  <a href="#">任务</a>
+  <span class="sep">&gt;</span>
+  <span class="current">这一刻，我终于长大。</span>
+</div>
+
+<!-- 主内容 -->
+<div class="main-content">
+
+  <!-- ========== 任务信息卡片 ========== -->
+  <div class="task-info-card">
+    <div class="task-info-row-top">
+      <div class="task-class-select">
+        0930测试班 <span class="arrow">&#9660;</span>
+      </div>
+    </div>
+    <div class="task-info-row">
+      <div class="task-info-item">
+        <span class="label">范围：</span>
+        <span class="value">全部</span>
+      </div>
+      <div class="task-info-item">
+        <span class="label">发布时间：</span>
+        <span class="value">2026-04-23 19:27:48</span>
+      </div>
+      <div class="task-info-item">
+        <span class="label">截止时间：</span>
+        <span class="value">无截止时间</span>
+      </div>
+      <div class="task-info-item">
+        <span class="label">作文题目/材料：</span>
+        <span class="value link" id="openEssayMaterial">点击查看</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Tab导航 ========== -->
+  <div class="tab-bar">
+    <div class="tab-item active">作文详情</div>
+    <div class="tab-item" onclick="switchTab('student')">学生明细</div>
+  </div>
+
+  <!-- ========== 统计行 ========== -->
+  <div class="stats-section">
+    <div class="stats-row">
+      <!-- 左侧：进度类 -->
+      <div class="stat-group">
+        <div class="stat-item">
+          <div class="stat-label">提交情况</div>
+          <div class="stat-value">20/20</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">AI批阅</div>
+          <div class="stat-value">18/20</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">老师审核</div>
+          <div class="stat-value">18/20</div>
+        </div>
+      </div>
+      <!-- 右侧：分数类 -->
+      <div class="stat-group">
+        <div class="stat-item">
+          <div class="stat-label">作文总分</div>
+          <div class="stat-value">50</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">本班平均</div>
+          <div class="stat-value">45.2</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">本班最高</div>
+          <div class="stat-value">49</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">本班最低</div>
+          <div class="stat-value">41</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 双列布局：柱状图 + 表扬榜 ========== -->
+  <div class="two-col">
+    <!-- 左侧：班级作文分类情况 -->
+    <div class="col-left">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">班级作文分类情况</div>
+        </div>
+        <div class="card-body">
+          <div class="bar-chart-wrapper">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧：表扬榜 -->
+    <div class="col-right">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">表扬榜</div>
+          <div class="praise-top-badge">TOP 30%</div>
+        </div>
+        <div class="card-body">
+          <div class="praise-grid">
+            <!-- 第1名 -->
+            <div class="praise-card">
+              <span class="rank-badge rank-1">1</span>
+              <div class="student-name">李明轩</div>
+              <div class="student-score score-gold">49分</div>
+            </div>
+            <div class="praise-card">
+              <span class="rank-badge rank-1">1</span>
+              <div class="student-name">王思琪</div>
+              <div class="student-score score-gold">49分</div>
+            </div>
+            <div class="praise-card">
+              <span class="rank-badge rank-2">2</span>
+              <div class="student-name">张雨涵</div>
+              <div class="student-score score-blue">48分</div>
+            </div>
+            <div class="praise-card">
+              <span class="rank-badge rank-2">2</span>
+              <div class="student-name">刘子墨</div>
+              <div class="student-score score-blue">48分</div>
+            </div>
+            <div class="praise-card">
+              <span class="rank-badge rank-2">2</span>
+              <div class="student-name">陈悠然</div>
+              <div class="student-score score-blue">48分</div>
+            </div>
+            <div class="praise-card">
+              <span class="rank-badge rank-3">3</span>
+              <div class="student-name">周瑾萱</div>
+              <div class="student-score score-purple">47分</div>
+            </div>
+            <div class="praise-card">
+              <span class="rank-badge rank-3">3</span>
+              <div class="student-name">吴诗涵</div>
+              <div class="student-score score-purple">47分</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 优秀作文 ========== -->
+  <div class="card essays-section">
+    <div class="card-header">
+      <div class="card-title">优秀作文</div>
+    </div>
+    <div class="card-body">
+      <div class="essays-grid">
+        <div class="essay-card">
+          <div class="essay-header">
+            <span class="essay-name">李明轩</span>
+            <span class="essay-score">49分</span>
+          </div>
+          <div class="essay-thumbs">
+            <div class="essay-thumb" onclick="openImagePreview('作文示例图片1.jpg')">
+              <img src="作文示例图片1.jpg" alt="第1页" />
+            </div>
+            <div class="essay-thumb" onclick="openImagePreview('作文示例图片1.jpg')">
+              <img src="作文示例图片1.jpg" alt="第2页" />
+            </div>
+            <div class="essay-thumb" onclick="openImagePreview('作文示例图片1.jpg')">
+              <img src="作文示例图片1.jpg" alt="第3页" />
+            </div>
+          </div>
+        </div>
+        <div class="essay-card">
+          <div class="essay-header">
+            <span class="essay-name">陈悠然</span>
+            <span class="essay-score">48分</span>
+          </div>
+          <div class="essay-thumbs">
+            <div class="essay-thumb" onclick="openImagePreview('作文示例图片2.jpg')">
+              <img src="作文示例图片2.jpg" alt="第1页" />
+            </div>
+            <div class="essay-thumb" onclick="openImagePreview('作文示例图片2.jpg')">
+              <img src="作文示例图片2.jpg" alt="第2页" />
+            </div>
+            <div class="essay-thumb" onclick="openImagePreview('作文示例图片2.jpg')">
+              <img src="作文示例图片2.jpg" alt="第3页" />
+            </div>
+          </div>
+        </div>
+        <div class="essay-card">
+          <div class="essay-header">
+            <span class="essay-name">张雨涵</span>
+            <span class="essay-score">47分</span>
+          </div>
+          <div class="essay-thumbs">
+            <div class="essay-thumb" onclick="openImagePreview('作文示例图片1.jpg')">
+              <img src="作文示例图片1.jpg" alt="第1页" />
+            </div>
+            <div class="essay-thumb" onclick="openImagePreview('作文示例图片1.jpg')">
+              <img src="作文示例图片1.jpg" alt="第2页" />
+            </div>
+            <div class="essay-thumb" onclick="openImagePreview('作文示例图片1.jpg')">
+              <img src="作文示例图片1.jpg" alt="第3页" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 班级总结 ========== -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-header">
+      <div class="card-title">班级总结</div>
+      <div class="summary-actions">
+        <div class="summary-action-btn" title="刷新">&#8635;</div>
+        <div class="summary-action-btn" title="编辑" id="openEditSummaryBtn">&#9998;</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="summary-content">
+        <div class="summary-section-title">班级总评</div>
+        <div id="pageTotalReview" style="white-space:pre-line;margin-bottom:20px;">同学们的选材大致可以分为三类，每一类都有可圈可点之处：
+1. 责任型：从"被爱"到"去爱"
+点评：这类作文写得最真挚。当大家第一次主动注意到父母的疲惫，第一次因为心疼而落泪，这就是长大。进步点在于很多同学学会了捕捉人物的神态细节（如妈妈洗碗时弯曲的脊背），画面感很强。
+提升建议：可以多写一点"手的温度"或"背影的重量"，让情感更含蓄。
+2. 挫折型：从"退缩"到"直面"
+点评：写挫折最容易落入"先失败后成功"的俗套。但这次有几位同学写得很有新意，比如《打碎的花瓶》写的是承认错误后的释然，《800米的终点》写的是虽然没拿到名次，但坚持跑完就是胜利。
+提升建议：重点描写那个"想要放弃却又咬牙坚持"的心理斗争过程，那是文章最闪光的地方。
+3. 理解型：从"自我"到"他人"
+点评：这类选材最难写，但也最有深度。有同学写到终于理解了环卫工人的辛苦，有同学写到理解了奶奶的唠叨。当我们的心开始装下别人的不容易，这才是真正的成熟。</div>
+
+        <div class="summary-section-title">修改建议</div>
+        <div style="white-space:pre-line;">1. "这一刻"不够具体：
+很多同学把"这一刻"写成了一整天，或者写得很快。记住，好文章要像放慢镜头。
+修改前：那一刻，我很感动，我觉得自己长大了。
+修改后：就在那个转身的瞬间，我看见她迅速抬起袖子在眼角抹了一下，随即又笑着朝我挥手。阳光斜打在她花白的头发上，我的心猛地一紧——原来她也会老。
+2. "终于"的铺垫不够：
+"长大"是一个转折，需要前面的"不懂事"来做对比。
+技巧：开头可以简单写写以前的自己（比如以前总是嫌妈妈烦，觉得理所当然），然后再写"这一刻"的转变，这样长大的分量会更重。
+3. 结尾不要喊口号：
+尽量避免"这就是长大的滋味"这类直白的结尾。试着用环境描写来收尾，用景写情。
+好结尾示例：那天晚上的风很凉，但握在我手心里的那杯热水，却烫了一路。</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 图片预览弹窗 -->
+<div id="imagePreviewDialog" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:2000;cursor:pointer;" onclick="closeImagePreview()">
+  <img id="previewImage" src="" alt="作文预览" style="max-width:90%;max-height:90%;object-fit:contain;border-radius:4px;box-shadow:0 4px 32px rgba(0,0,0,0.3);cursor:default;" onclick="event.stopPropagation();" />
+</div>
+
+<!-- 作文题目弹窗 -->
+<div id="essayMaterialDialog" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;">
+  <div style="width:520px;background:#fff;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,0.15);overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eee;">
+      <span style="font-size:16px;font-weight:600;color:#333;">作文题目/材料</span>
+      <button id="closeEssayMaterial" style="width:28px;height:28px;border:none;background:none;font-size:18px;color:#909399;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:4px;">&times;</button>
+    </div>
+    <div style="padding:24px 20px;">
+      <div style="font-size:14px;line-height:2;color:#303133;">
+        <p style="margin-bottom:16px;">总有一段时光让你常常回味，总有一段岁月对你意义非常。那段光阴必定启发过你的深刻感悟，让你感到自己忽然长大。</p>
+        <p style="margin-bottom:0;">请以"那段日子，我忽然长大"为题，写一篇不少于600字的作文。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑班级总结弹窗 -->
+<div id="editSummaryDialog" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;">
+  <div style="width:680px;background:#fff;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,0.15);overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eee;">
+      <span style="font-size:16px;font-weight:600;color:#333;">编辑班级总结</span>
+      <button id="closeEditSummary" style="width:28px;height:28px;border:none;background:none;font-size:18px;color:#909399;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:4px;">&times;</button>
+    </div>
+    <div style="padding:20px 24px 24px;">
+      <div style="margin-bottom:20px;">
+        <div style="font-size:14px;color:#606266;margin-bottom:8px;">
+          班级总评：
+        </div>
+        <textarea id="summaryTotalReview" style="width:100%;height:140px;border:1px solid #dcdfe6;border-radius:4px;padding:10px 12px;font-size:14px;color:#606266;resize:vertical;outline:none;font-family:inherit;line-height:1.8;">同学们的选材大致可以分为三类，每一类都有可圈可点之处：
+1. 责任型：从"被爱"到"去爱"
+点评：这类作文写得最真挚。当大家第一次主动注意到父母的疲惫，第一次因为心疼而落泪，这就是长大。进步点在于很多同学学会了捕捉人物的神态细节（如妈妈洗碗时弯曲的脊背），画面感很强。
+提升建议：可以多写一点"手的温度"或"背影的重量"，让情感更含蓄。
+2. 挫折型：从"退缩"到"直面"
+点评：写挫折最容易落入"先失败后成功"的俗套。但这次有几位同学写得很有新意，比如《打碎的花瓶》写的是承认错误后的释然，《800米的终点》写的是虽然没拿到名次，但坚持跑完就是胜利。
+提升建议：重点描写那个"想要放弃却又咬牙坚持"的心理斗争过程，那是文章最闪光的地方。
+3. 理解型：从"自我"到"他人"
+点评：这类选材最难写，但也最有深度。有同学写到终于理解了环卫工人的辛苦，有同学写到理解了奶奶的唠叨。当我们的心开始装下别人的不容易，这才是真正的成熟。</textarea>
+      </div>
+      <div>
+        <div style="font-size:14px;color:#606266;margin-bottom:8px;">修改建议：</div>
+        <textarea id="summaryModifySuggestion" style="width:100%;height:200px;border:1px solid #dcdfe6;border-radius:4px;padding:10px 12px;font-size:14px;color:#606266;resize:vertical;outline:none;font-family:inherit;line-height:1.8;">1. "这一刻"不够具体：
+很多同学把"这一刻"写成了一整天，或者写得很快。记住，好文章要像放慢镜头。
+修改前：那一刻，我很感动，我觉得自己长大了。
+修改后：就在那个转身的瞬间，我看见她迅速抬起袖子在眼角抹了一下，随即又笑着朝我挥手。阳光斜打在她花白的头发上，我的心猛地一紧——原来她也会老。
+2. "终于"的铺垫不够：
+"长大"是一个转折，需要前面的"不懂事"来做对比。
+技巧：开头可以简单写写以前的自己（比如以前总是嫌妈妈烦，觉得理所当然），然后再写"这一刻"的转变，这样长大的分量会更重。
+3. 结尾不要喊口号：
+尽量避免"这就是长大的滋味"这类直白的结尾。试着用环境描写来收尾，用景写情。
+好结尾示例：那天晚上的风很凉，但握在我手心里的那杯热水，却烫了一路。</textarea>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:center;padding:16px 24px 24px;">
+      <button id="confirmEditSummary" style="height:36px;padding:0 32px;border-radius:4px;font-size:14px;cursor:pointer;border:1px solid transparent;background:#1AC2A3;color:#fff;transition:all 0.2s;line-height:34px;">确定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Tab切换
+  function switchTab(tab) {
+    if (tab === 'student') {
+      window.location.href = '任务详情--学生明细_原型.html';
+    }
+  }
+
+  // 图片预览
+  function openImagePreview(src) {
+    const dialog = document.getElementById('imagePreviewDialog');
+    document.getElementById('previewImage').src = src;
+    dialog.style.display = 'flex';
+  }
+  function closeImagePreview() {
+    document.getElementById('imagePreviewDialog').style.display = 'none';
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeImagePreview();
+  });
+
+  // 作文题目弹窗
+  document.getElementById('openEssayMaterial').addEventListener('click', function() {
+    document.getElementById('essayMaterialDialog').style.display = 'flex';
+  });
+  document.getElementById('closeEssayMaterial').addEventListener('click', function() {
+    document.getElementById('essayMaterialDialog').style.display = 'none';
+  });
+  document.getElementById('essayMaterialDialog').addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
+  });
+
+  // 编辑班级总结弹窗
+  document.getElementById('openEditSummaryBtn').addEventListener('click', function() {
+    document.getElementById('editSummaryDialog').style.display = 'flex';
+  });
+  document.getElementById('closeEditSummary').addEventListener('click', function() {
+    document.getElementById('editSummaryDialog').style.display = 'none';
+  });
+  document.getElementById('editSummaryDialog').addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
+  });
+  document.getElementById('confirmEditSummary').addEventListener('click', function() {
+    const reviewText = document.getElementById('summaryTotalReview').value;
+    const suggestionText = document.getElementById('summaryModifySuggestion').value;
+    const reviewEl = document.getElementById('pageTotalReview');
+    const suggestEl = document.getElementById('pageModifySuggestion');
+    if (reviewEl) { reviewEl.textContent = reviewText; reviewEl.style.whiteSpace = 'pre-line'; }
+    if (suggestEl) { suggestEl.textContent = suggestionText; suggestEl.style.whiteSpace = 'pre-line'; }
+    document.getElementById('editSummaryDialog').style.display = 'none';
+  });
+
+// ========== 柱状图 — 班级作文分类情况 ==========
+(function() {
+  const canvas = document.getElementById('barChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width;
+  const H = rect.height;
+  const pad = { top: 20, right: 20, bottom: 60, left: 40 };
+  const cW = W - pad.left - pad.right;
+  const cH = H - pad.top - pad.bottom;
+
+  const categories = [
+    { label: '一类文\n[54, 60]', value: 4 },
+    { label: '二类文\n[45, 54)', value: 6 },
+    { label: '三类文\n[36, 45)', value: 8 },
+    { label: '四类文\n[0, 36)', value: 0 }
+  ];
+
+  const maxV = 10;
+  const barCount = categories.length;
+  const barWidth = cW / barCount * 0.5;
+  const gap = cW / barCount;
+
+  // 网格线 + Y轴标签
+  ctx.strokeStyle = '#ebeef5';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 5; i++) {
+    const y = pad.top + (cH / 5) * i;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(W - pad.right, y);
+    ctx.stroke();
+    ctx.fillStyle = '#909399';
+    ctx.font = '11px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(maxV - (maxV / 5) * i), pad.left - 8, y + 4);
+  }
+
+  // 柱子
+  const barColor = '#1AC2A3';
+  const barColorEmpty = '#d9d9d9';
+  categories.forEach((cat, i) => {
+    const x = pad.left + gap * i + (gap - barWidth) / 2;
+    const barH = cat.value > 0 ? (cat.value / maxV) * cH : 4;
+    const y = pad.top + cH - barH;
+
+    if (cat.value > 0) {
+      const grad = ctx.createLinearGradient(x, y, x, pad.top + cH);
+      grad.addColorStop(0, '#3DD4BB');
+      grad.addColorStop(1, barColor);
+      ctx.fillStyle = grad;
+    } else {
+      ctx.fillStyle = barColorEmpty;
+    }
+
+    ctx.beginPath();
+    const r = 3;
+    if (cat.value > 0) {
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + barWidth - r, y);
+      ctx.quadraticCurveTo(x + barWidth, y, x + barWidth, y + r);
+      ctx.lineTo(x + barWidth, pad.top + cH);
+      ctx.lineTo(x, pad.top + cH);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+    } else {
+      ctx.fillRect(x, pad.top + cH - barH, barWidth, barH);
+    }
+    ctx.fill();
+
+    // 数值标签
+    if (cat.value > 0) {
+      ctx.fillStyle = '#303133';
+      ctx.font = 'bold 13px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(cat.value, x + barWidth / 2, y - 8);
+    }
+
+    // X轴分类标签
+    ctx.fillStyle = '#606266';
+    ctx.font = '12px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    const lines = cat.label.split('\n');
+    lines.forEach((line, li) => {
+      ctx.fillText(line, x + barWidth / 2, pad.top + cH + 16 + li * 16);
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
