@@ -442,6 +442,106 @@
   .summary-content .item-detail .highlight {
     color: #1AC2A3;
   }
+
+  /* ========== 柱状图点击弹窗 ========== */
+  .bar-chart-dialog {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .bar-chart-dialog .dialog-content {
+    width: 400px;
+    max-height: 70vh;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .bar-chart-dialog .dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+  }
+  .bar-chart-dialog .dialog-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+  }
+  .bar-chart-dialog .dialog-close {
+    width: 28px; height: 28px;
+    border: none; background: none;
+    font-size: 18px; color: #909399;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+  .bar-chart-dialog .dialog-close:hover {
+    background: #f5f5f5;
+  }
+  .bar-chart-dialog .dialog-body {
+    padding: 16px 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .bar-chart-dialog .student-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    transition: background 0.15s;
+    cursor: default;
+  }
+  .bar-chart-dialog .student-list-item:hover {
+    background: #f5f7fa;
+  }
+  .bar-chart-dialog .student-list-item .item-index {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    color: #909399;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+  .bar-chart-dialog .student-list-item .item-name {
+    flex: 1;
+    font-size: 14px;
+    color: #303133;
+  }
+  .bar-chart-dialog .student-list-item .item-score {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1AC2A3;
+  }
+  .bar-chart-dialog .empty-hint {
+    text-align: center;
+    color: #c0c4cc;
+    font-size: 14px;
+    padding: 32px 0;
+  }
+  .bar-chart-wrapper canvas {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+  .bar-chart-wrapper canvas:hover {
+    opacity: 0.92;
+  }
 </style>
 </head>
 <body>
@@ -744,6 +844,18 @@
   </div>
 </div>
 
+<!-- 柱状图学生名单弹窗 -->
+<div id="barChartStudentDialog" class="bar-chart-dialog">
+  <div class="dialog-content">
+    <div class="dialog-header">
+      <span class="dialog-title" id="barChartDialogTitle">一类文 学生名单</span>
+      <button id="closeBarChartDialog" class="dialog-close">&times;</button>
+    </div>
+    <div class="dialog-body" id="barChartDialogBody">
+    </div>
+  </div>
+</div>
+
 <!-- 编辑班级总结弹窗 -->
 <div id="editSummaryDialog" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;">
   <div style="width:680px;background:#fff;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,0.15);overflow:hidden;">
@@ -865,6 +977,35 @@
     { label: '四类文\n[0, 36)', value: 0 }
   ];
 
+  // 各类别对应的学生名单（模拟数据）
+  const categoryStudents = [
+    [
+      { name: '李明轩', score: 49 },
+      { name: '王思琪', score: 49 },
+      { name: '张雨涵', score: 48 },
+      { name: '刘子墨', score: 48 }
+    ],
+    [
+      { name: '陈悠然', score: 46 },
+      { name: '周瑾萱', score: 46 },
+      { name: '吴诗涵', score: 45 },
+      { name: '赵子轩', score: 45 },
+      { name: '孙一诺', score: 45 },
+      { name: '郑浩然', score: 45 }
+    ],
+    [
+      { name: '王梓涵', score: 43 },
+      { name: '黄雨桐', score: 42 },
+      { name: '林俊杰', score: 41 },
+      { name: '何雨晴', score: 40 },
+      { name: '马天宇', score: 39 },
+      { name: '徐梦瑶', score: 38 },
+      { name: '杨思远', score: 37 },
+      { name: '朱晓峰', score: 36 }
+    ],
+    []
+  ];
+
   const maxV = 10;
   const barCount = categories.length;
   const barWidth = cW / barCount * 0.5;
@@ -884,6 +1025,9 @@
     ctx.textAlign = 'right';
     ctx.fillText(Math.round(maxV - (maxV / 5) * i), pad.left - 8, y + 4);
   }
+
+  // 存储柱子区域用于点击检测
+  const barAreas = [];
 
   // 柱子
   const barColor = '#1AC2A3';
@@ -933,6 +1077,59 @@
     lines.forEach((line, li) => {
       ctx.fillText(line, x + barWidth / 2, pad.top + cH + 16 + li * 16);
     });
+
+    // 记录柱子区域
+    barAreas.push({ x, y: pad.top, w: barWidth, h: cH, index: i });
+  });
+
+  // 柱子点击事件 — 弹出学生名单
+  canvas.addEventListener('click', function(e) {
+    const canvasRect = canvas.getBoundingClientRect();
+    const mx = e.clientX - canvasRect.left;
+    const my = e.clientY - canvasRect.top;
+
+    let clickedBar = null;
+    for (let i = 0; i < barAreas.length; i++) {
+      const area = barAreas[i];
+      if (mx >= area.x && mx <= area.x + area.w && my >= area.y && my <= area.y + area.h) {
+        clickedBar = i;
+        break;
+      }
+    }
+
+    if (clickedBar === null || categories[clickedBar].value === 0) return;
+
+    const students = categoryStudents[clickedBar];
+    const catLabel = categories[clickedBar].label.replace('\n', ' ');
+    const dialog = document.getElementById('barChartStudentDialog');
+    const titleEl = document.getElementById('barChartDialogTitle');
+    const bodyEl = document.getElementById('barChartDialogBody');
+
+    titleEl.textContent = catLabel + ' 学生名单';
+
+    if (students.length === 0) {
+      bodyEl.innerHTML = '<div class="empty-hint">暂无学生</div>';
+    } else {
+      let html = '';
+      students.forEach((s, idx) => {
+        html += `<div class="student-list-item">
+          <span class="item-index">${idx + 1}</span>
+          <span class="item-name">${s.name}</span>
+          <span class="item-score">${s.score}分</span>
+        </div>`;
+      });
+      bodyEl.innerHTML = html;
+    }
+
+    dialog.style.display = 'flex';
+  });
+
+  // 关闭弹窗
+  document.getElementById('closeBarChartDialog').addEventListener('click', function() {
+    document.getElementById('barChartStudentDialog').style.display = 'none';
+  });
+  document.getElementById('barChartStudentDialog').addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
   });
 })();
 </script>
