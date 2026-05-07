@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>任务列表</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    font-size: 14px;
+  }
+
+  /* 顶部导航 */
+  .top-nav {
+    height: 56px;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .top-nav .content-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1AC2A3;
+    letter-spacing: 1px;
+  }
+  .nav-logo .logo-icon {
+    width: 28px; height: 28px;
+    background: #1AC2A3;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .nav-product {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    color: #303133;
+    cursor: pointer;
+    padding-left: 20px;
+    border-left: 1px solid #e8e8e8;
+  }
+  .nav-product .arrow {
+    font-size: 10px;
+    color: #909399;
+  }
+  .nav-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .nav-tab {
+    padding: 6px 16px;
+    font-size: 14px;
+    color: #606266;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .nav-tab:hover { color: #1AC2A3; }
+  .nav-tab.active {
+    color: #1AC2A3;
+    font-weight: 600;
+    position: relative;
+  }
+  .nav-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 3px;
+    background: #1AC2A3;
+    border-radius: 2px;
+  }
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .nav-bell {
+    font-size: 18px;
+    color: #909399;
+    cursor: pointer;
+  }
+  .nav-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #606266;
+  }
+  .nav-user .user-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #1AC2A3;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+  .nav-logout {
+    font-size: 13px;
+    color: #909399;
+    cursor: pointer;
+    margin-left: 4px;
+  }
+  .nav-logout:hover { color: #f56c6c; }
+
+  /* 内容容器 - 定宽居中 */
+  .content-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* 面包屑 */
+  .breadcrumb-area {
+    padding: 12px 0 0;
+  }
+  .breadcrumb {
+    font-size: 13px;
+    color: #909399;
+  }
+  .breadcrumb a { color: #909399; text-decoration: none; }
+  .breadcrumb a:hover { color: #1AC2A3; }
+  .breadcrumb .current { color: #303133; }
+
+  /* 筛选区域 */
+  .filter-area {
+    margin: 16px 0 0;
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px 24px 16px;
+  }
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #606266;
+  }
+  .filter-item label {
+    white-space: nowrap;
+    color: #909399;
+    font-size: 13px;
+  }
+  .filter-item select {
+    height: 32px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    padding: 0 10px;
+    font-size: 13px;
+    color: #606266;
+    outline: none;
+    transition: border-color 0.2s;
+    background: #fff;
+    cursor: pointer;
+    min-width: 100px;
+  }
+  .filter-item select:focus { border-color: #1AC2A3; }
+  .filter-item .date-range {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .filter-item .date-range input {
+    width: 110px;
+    height: 32px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    padding: 0 8px;
+    font-size: 13px;
+    color: #606266;
+    outline: none;
+  }
+  .filter-item .date-range input:focus { border-color: #1AC2A3; }
+  .filter-item .date-range .date-sep { color: #909399; }
+  .filter-item .search-input {
+    width: 200px;
+    height: 32px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    padding: 0 32px 0 10px;
+    font-size: 13px;
+    color: #606266;
+    outline: none;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23909399' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat right 10px center;
+  }
+  .filter-item .search-input:focus { border-color: #1AC2A3; }
+  .filter-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 4px;
+  }
+  .btn {
+    height: 32px;
+    padding: 0 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    line-height: 30px;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: #1AC2A3;
+    color: #fff;
+  }
+  .btn-primary:hover { background: #3dd4bb; }
+  .btn-default {
+    background: #fff;
+    border: 1px solid #dcdfe6;
+    color: #606266;
+  }
+  .btn-default:hover { border-color: #c0c4cc; }
+
+  /* 工具栏 */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0 0;
+  }
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .sort-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #606266;
+    cursor: pointer;
+  }
+  .sort-item.active { color: #1AC2A3; }
+  .sort-item .sort-arrow {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    line-height: 1;
+  }
+  .sort-item .sort-arrow span {
+    font-size: 8px;
+    line-height: 8px;
+    color: #c0c4cc;
+  }
+  .sort-item.active .sort-arrow span:first-child { color: #1AC2A3; }
+  .toggle-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #909399;
+    cursor: pointer;
+  }
+  .toggle-switch {
+    width: 36px;
+    height: 18px;
+    border-radius: 9px;
+    background: #dcdfe6;
+    position: relative;
+    transition: background 0.3s;
+    cursor: pointer;
+  }
+  .toggle-switch.active { background: #1AC2A3; }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .toggle-switch.active::after { left: 20px; }
+  .toolbar-right .btn-publish {
+    background: #1AC2A3;
+    color: #fff;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .toolbar-right .btn-publish:hover { background: #3dd4bb; }
+
+  /* 任务卡片列表 */
+  .task-list {
+    padding: 16px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .task-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .task-card:hover {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  }
+
+  /* 卡片头部 */
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 12px;
+  }
+  .card-type-badge {
+    min-width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.3;
+    flex-shrink: 0;
+    border: 1px solid;
+  }
+  .card-type-badge.语文作文 {
+    background: #e6f9f5;
+    color: #1AC2A3;
+    border-color: #b3efe3;
+  }
+  .card-type-badge.英语作文 {
+    background: #ecf5ff;
+    color: #409eff;
+    border-color: #b3d8ff;
+  }
+  .card-type-badge.练习 {
+    background: #e8f5e9;
+    color: #67c23a;
+    border-color: #b2df8a;
+  }
+  .card-type-badge.语文默写 {
+    background: #f0f9eb;
+    color: #85ce61;
+    border-color: #c2e7b0;
+  }
+  .card-type-badge .badge-subject { font-size: 11px; }
+  .card-type-badge .badge-type { font-size: 11px; }
+  .card-header-info { flex: 1; min-width: 0; }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+  .card-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 13px;
+    color: #909399;
+  }
+  .card-meta-row .meta-item { color: #909399; }
+  .card-meta-row .meta-item .meta-value { color: #909399; }
+  .card-meta-row .meta-item .meta-value.ai { color: #909399; }
+  .card-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .card-action-btn {
+    height: 28px;
+    padding: 0 12px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 12px;
+    color: #606266;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .card-action-btn:hover {
+    border-color: #1AC2A3;
+    color: #1AC2A3;
+  }
+  .card-action-btn.btn-set {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .card-action-btn.btn-set .dropdown-arrow {
+    font-size: 10px;
+    color: #909399;
+  }
+
+  /* 下拉菜单 */
+  .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    min-width: 120px;
+    background: #fff;
+    border: 1px solid #ebeef5;
+    border-radius: 4px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    padding: 6px 0;
+    z-index: 50;
+    display: none;
+  }
+  .dropdown-menu.show { display: block; }
+  .dropdown-item {
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #606266;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .dropdown-item:hover { background: #f5f7fa; color: #1AC2A3; }
+  .dropdown-item.danger { color: #f56c6c; }
+  .dropdown-item.danger:hover { background: #fef0f5; color: #f56c6c; }
+
+  /* 卡片内容区 */
+  .card-body { padding: 16px 20px; }
+  .class-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f5f5f5;
+    gap: 24px;
+  }
+  .class-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .class-row:first-child { padding-top: 0; }
+  .class-name {
+    min-width: 120px;
+    font-size: 13px;
+    color: #303133;
+    font-weight: 500;
+  }
+
+  /* 信息列 */
+  .info-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+  }
+  .info-label { font-size: 12px; color: #909399; }
+  .info-value { font-size: 13px; color: #606266; }
+  .info-value.time { font-size: 12px; }
+
+  /* 状态显示 */
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-dot.green { background: #67c23a; }
+  .status-dot.yellow { background: #e6a23c; }
+  .status-dot.gray { background: #909399; }
+  .status-text { font-size: 13px; color: #606266; }
+
+  /* 完成进度 */
+  .progress-ratio {
+    font-size: 13px;
+    color: #1AC2A3;
+  }
+  .progress-ratio.low { color: #e6a23c; }
+
+  /* 待审核 */
+  .audit-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 50px;
+  }
+  .audit-label { font-size: 12px; color: #909399; }
+  .audit-count { font-size: 14px; color: #606266; }
+
+  /* 得分率 */
+  .score-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 50px;
+  }
+  .score-label { font-size: 12px; color: #909399; }
+  .score-value { font-size: 14px; color: #606266; }
+  .score-value.dash { color: #909399; }
+
+  /* 操作链接 */
+  .action-links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .action-link {
+    font-size: 13px;
+    color: #1AC2A3;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.2s;
+  }
+  .action-link:hover { color: #3dd4bb; }
+  .action-link.publish-link { color: #1AC2A3; }
+  .action-sep {
+    color: #dcdfe6;
+    font-size: 12px;
+  }
+
+  /* 待批阅 */
+  .batch-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 50px;
+  }
+  .batch-label { font-size: 12px; color: #909399; }
+  .batch-count { font-size: 14px; color: #409eff; }
+
+  /* 分页 */
+  .pagination-area {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 16px 0 24px;
+    gap: 4px;
+  }
+  .page-btn {
+    min-width: 32px;
+    height: 32px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    color: #606266;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .page-btn:hover { border-color: #1AC2A3; color: #1AC2A3; }
+  .page-btn.active { background: #1AC2A3; color: #fff; border-color: #1AC2A3; }
+  .page-btn:disabled { cursor: not-allowed; color: #c0c4cc; border-color: #ebeef5; }
+  .page-total {
+    font-size: 13px;
+    color: #909399;
+    margin-right: 8px;
+  }
+
+  /* 发布任务弹窗 */
+  .publish-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .publish-modal-overlay.hidden { display: none !important; }
+
+  .publish-modal {
+    width: 740px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    padding: 24px;
+    display: flex;
+    gap: 24px;
+  }
+
+  .publish-modal-section {
+    flex: 1;
+    background: #fafbfc;
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .publish-modal-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 16px;
+  }
+
+  .publish-task-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .publish-task-btn {
+    height: 44px;
+    border: 1px solid #dcdfe6;
+    border-radius: 6px;
+    background: #fff;
+    font-size: 14px;
+    color: #606266;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .publish-task-btn:hover {
+    border-color: #1AC2A3;
+    color: #1AC2A3;
+  }
+
+  /* 语文类按钮 */
+  .publish-task-btn.chinese {
+    border-color: #f0c040;
+    color: #e6a23c;
+    background: #fef9ec;
+  }
+  .publish-task-btn.chinese:hover {
+    border-color: #e6a23c;
+    color: #cf9236;
+    background: #fdf3d7;
+  }
+
+  /* 英语类按钮 */
+  .publish-task-btn.english {
+    border-color: #7ed321;
+    color: #67c23a;
+    background: #f0f9eb;
+  }
+  .publish-task-btn.english:hover {
+    border-color: #5daf34;
+    color: #5daf34;
+    background: #e4f5e0;
+  }
+
+  /* 数学按钮 */
+  .publish-task-btn.math {
+    grid-column: 1 / -1;
+    background: #e8f4fd;
+    border-color: #409eff;
+    color: #409eff;
+    font-weight: 600;
+  }
+  .publish-task-btn.math:hover {
+    background: #d6ecfc;
+    border-color: #337ecc;
+    color: #337ecc;
+  }
+
+  /* 删除确认弹窗 */
+  .dialog-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .dialog-overlay.hidden { display: none !important; }
+  .dialog-box {
+    width: 420px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    overflow: hidden;
+  }
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+  }
+  .dialog-title { font-size: 16px; font-weight: 600; color: #333; }
+  .dialog-close {
+    width: 28px; height: 28px;
+    border: none;
+    background: none;
+    font-size: 18px;
+    color: #909399;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+  .dialog-close:hover { background: #f5f5f5; }
+  .dialog-content {
+    padding: 24px 20px;
+  }
+  .dialog-msg {
+    font-size: 14px;
+    color: #606266;
+    line-height: 1.8;
+  }
+  .dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 20px;
+    border-top: 1px solid #eee;
+  }
+  .dialog-btn {
+    height: 36px;
+    padding: 0 24px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    line-height: 34px;
+  }
+  .dialog-btn-cancel {
+    background: #fff;
+    border-color: #dcdfe6;
+    color: #606266;
+  }
+  .dialog-btn-cancel:hover { border-color: #c0c4cc; }
+  .dialog-btn-confirm {
+    background: #f56c6c;
+    color: #fff;
+  }
+  .dialog-btn-confirm:hover { background: #f78989; }
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<div class="top-nav">
+  <div class="content-wrapper">
+    <div class="nav-left">
+      <div class="nav-logo">
+        <div class="logo-icon">鲸</div>
+        <span>鲸准教</span>
+      </div>
+      <div class="nav-product">
+        E教学 <span class="arrow">&#9662;</span>
+      </div>
+      <div class="nav-tabs">
+        <a class="nav-tab" href="#">我的班级</a>
+        <a class="nav-tab" href="#">备课</a>
+        <a class="nav-tab" href="#">授课</a>
+        <a class="nav-tab active" href="语文作文_全日制_任务列表.html">任务</a>
+        <a class="nav-tab" href="#">学情</a>
+        <a class="nav-tab" href="#">我的学习</a>
+        <a class="nav-tab" href="#">资源平台</a>
+        <a class="nav-tab" href="#" style="color:#1AC2A3;">Ai助教</a>
+      </div>
+    </div>
+    <div class="nav-right">
+      <span class="nav-bell">&#x1F514;</span>
+      <div class="nav-user">
+        <div class="user-avatar">杨</div>
+        <span>杨孟丹</span>
+      </div>
+      <span class="nav-logout">退出</span>
+    </div>
+  </div>
+</div>
+
+<!-- 面包屑 -->
+<div class="content-wrapper">
+<div class="breadcrumb-area">
+  <div class="breadcrumb">
+    <a href="#">首页</a> &gt; <span class="current">任务</span>
+  </div>
+</div>
+
+<!-- 筛选区域 -->
+<div class="filter-area">
+  <div class="filter-row">
+    <div class="filter-item">
+      <label>学届：</label>
+      <select><option>2025-2026</option><option>2024-2025</option></select>
+    </div>
+    <div class="filter-item">
+      <label>班级：</label>
+      <select><option>全部</option><option>初一(1)班</option><option>初一(2)班</option></select>
+    </div>
+    <div class="filter-item">
+      <label>类型：</label>
+      <select><option>全部</option><option>作业</option><option>堂练</option></select>
+    </div>
+    <div class="filter-item">
+      <label>学科：</label>
+      <select><option>全部</option><option selected>语文</option><option>英语</option><option>数学</option></select>
+    </div>
+    <div class="filter-item">
+      <label>状态：</label>
+      <select><option>全部</option><option>已发布</option><option>未发布</option><option>进行中</option></select>
+    </div>
+    <div class="filter-item">
+      <label>发布时间：</label>
+      <div class="date-range">
+        <input type="text" placeholder="开始日期">
+        <span class="date-sep">至</span>
+        <input type="text" placeholder="结束日期">
+      </div>
+    </div>
+    <div class="filter-item">
+      <input class="search-input" type="text" placeholder="请输入任务标题或章节名称">
+    </div>
+    <div class="filter-actions">
+      <button class="btn btn-primary">查询</button>
+      <button class="btn btn-default">重置</button>
+    </div>
+  </div>
+</div>
+
+<!-- 工具栏 -->
+<div class="toolbar">
+  <div class="toolbar-left">
+    <span class="sort-item active">
+      创建时间
+      <span class="sort-arrow"><span>&#9650;</span><span>&#9660;</span></span>
+    </span>
+    <span class="sort-item">
+      发布时间
+      <span class="sort-arrow"><span>&#9650;</span><span>&#9660;</span></span>
+    </span>
+    <span class="toggle-item">
+      只看我发布的
+      <span class="toggle-switch"></span>
+    </span>
+  </div>
+  <div class="toolbar-right">
+    <button class="btn btn-publish">发布任务 &#9662;</button>
+  </div>
+</div>
+
+<!-- 任务列表 -->
+<div class="task-list">
+
+  <!-- 卡片1：语文作文 - 已发布（有审核） -->
+  <div class="task-card">
+    <div class="card-header">
+      <div class="card-type-badge 语文作文">
+        <span class="badge-subject">语文</span>
+        <span class="badge-type">作文</span>
+      </div>
+      <div class="card-header-info">
+        <div class="card-title">2026南海一模--旧物的回忆</div>
+        <div class="card-meta-row">
+          <span class="meta-item">批阅类型：<span class="meta-value ai">AI批阅</span></span>
+          <span class="meta-item">任务类型：<span class="meta-value">作业</span></span>
+          <span class="meta-item">课程：<span class="meta-value">流程测试0901</span></span>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="card-action-btn">催交</button>
+        <button class="card-action-btn">编辑</button>
+        <button class="card-action-btn btn-set" data-toggle="dropdown1">设置 <span class="dropdown-arrow">&#9662;</span></button>
+        <div class="dropdown-menu" id="dropdown1">
+          <div class="dropdown-item danger" onclick="openDeleteDialog()">删除任务</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="class-row">
+        <span class="class-name">0930测试班</span>
+        <div class="info-col">
+          <span class="info-label">发布时间</span>
+          <span class="info-value time">2026-04-23 19:27:48</span>
+        </div>
+        <div class="info-col">
+          <span class="info-label">截止时间</span>
+          <span class="info-value">无截止时间</span>
+        </div>
+        <div class="info-col">
+          <span class="info-label">发布状态</span>
+          <div class="status-item">
+            <span class="status-dot green"></span>
+            <span class="status-text">已发布</span>
+          </div>
+        </div>
+        <div class="info-col">
+          <span class="info-label">完成情况</span>
+          <span class="progress-ratio">1/1</span>
+        </div>
+        <div class="audit-info">
+          <span class="audit-label">待审核</span>
+          <span class="audit-count">1</span>
+        </div>
+        <div class="action-links">
+          <a class="action-link" href="语文作文_全日制_任务详情_学生明细.html">审核</a>
+          <span class="action-sep">|</span>
+          <a class="action-link" href="语文作文_全日制_任务详情_班级情况.html">详情</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 卡片2：语文作文 - 已发布（无待审核） -->
+  <div class="task-card">
+    <div class="card-header">
+      <div class="card-type-badge 语文作文">
+        <span class="badge-subject">语文</span>
+        <span class="badge-type">作文</span>
+      </div>
+      <div class="card-header-info">
+        <div class="card-title">我的成长故事</div>
+        <div class="card-meta-row">
+          <span class="meta-item">批阅类型：<span class="meta-value ai">AI批阅</span></span>
+          <span class="meta-item">任务类型：<span class="meta-value">作业</span></span>
+          <span class="meta-item">课程：<span class="meta-value">初一语文第一单元</span></span>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="card-action-btn">催交</button>
+        <button class="card-action-btn">编辑</button>
+        <button class="card-action-btn btn-set" data-toggle="dropdown2">设置 <span class="dropdown-arrow">&#9662;</span></button>
+        <div class="dropdown-menu" id="dropdown2">
+          <div class="dropdown-item danger" onclick="openDeleteDialog()">删除任务</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="class-row">
+        <span class="class-name">初一(1)班</span>
+        <div class="info-col">
+          <span class="info-label">发布时间</span>
+          <span class="info-value time">2026-04-18 08:00:00</span>
+        </div>
+        <div class="info-col">
+          <span class="info-label">截止时间</span>
+          <span class="info-value">2026-04-25 23:59:59</span>
+        </div>
+        <div class="info-col">
+          <span class="info-label">发布状态</span>
+          <div class="status-item">
+            <span class="status-dot green"></span>
+            <span class="status-text">已发布</span>
+          </div>
+        </div>
+        <div class="info-col">
+          <span class="info-label">完成情况</span>
+          <span class="progress-ratio">45/48</span>
+        </div>
+        <div class="audit-info">
+          <span class="audit-label">待审核</span>
+          <span class="audit-count">0</span>
+        </div>
+        <div class="action-links">
+          <a class="action-link" href="语文作文_全日制_任务详情_班级情况.html">详情</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 卡片3：语文作文 - 未发布 -->
+  <div class="task-card">
+    <div class="card-header">
+      <div class="card-type-badge 语文作文">
+        <span class="badge-subject">语文</span>
+        <span class="badge-type">作文</span>
+      </div>
+      <div class="card-header-info">
+        <div class="card-title">难忘的那一次</div>
+        <div class="card-meta-row">
+          <span class="meta-item">批阅类型：<span class="meta-value ai">AI批阅</span></span>
+          <span class="meta-item">任务类型：<span class="meta-value">作业</span></span>
+          <span class="meta-item">课程：<span class="meta-value">初一语文第二单元</span></span>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="card-action-btn">编辑</button>
+        <button class="card-action-btn btn-set" data-toggle="dropdown3">设置 <span class="dropdown-arrow">&#9662;</span></button>
+        <div class="dropdown-menu" id="dropdown3">
+          <div class="dropdown-item danger" onclick="openDeleteDialog()">删除任务</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="class-row">
+        <span class="class-name">初一(2)班</span>
+        <div class="info-col">
+          <span class="info-label">发布时间</span>
+          <span class="info-value time" style="color:#e6a23c;">稍后发布</span>
+        </div>
+        <div class="info-col">
+          <span class="info-label">截止时间</span>
+          <span class="info-value">2026-04-30 23:59:59</span>
+        </div>
+        <div class="info-col">
+          <span class="info-label">发布状态</span>
+          <div class="status-item">
+            <span class="status-dot yellow"></span>
+            <span class="status-text">未到发布时间</span>
+          </div>
+        </div>
+        <div class="info-col">
+          <span class="info-label">完成情况</span>
+          <span class="progress-ratio low">0/50</span>
+        </div>
+        <div class="audit-info">
+          <span class="audit-label">待审核</span>
+          <span class="audit-count">0</span>
+        </div>
+        <div class="action-links">
+          <a class="action-link publish-link">发布</a>
+          <span class="action-sep">|</span>
+          <a class="action-link" href="语文作文_全日制_任务详情_班级情况.html">详情</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 卡片4：英语作文 -->
+  <div class="task-card">
+    <div class="card-header">
+      <div class="card-type-badge 英语作文">
+        <span class="badge-subject">英语</span>
+        <span class="badge-type">作文</span>
+      </div>
+      <div class="card-header-info">
+        <div class="card-title">
+          0423生产测试--毕子楠（十）
+          <span style="color:#909399;font-size:13px;font-weight:400;">AI批阅</span>
+          <span style="color:#909399;font-size:13px;font-weight:400;">类型：作业</span>
+          <span style="color:#909399;font-size:13px;font-weight:400;">课程：流程测试0901</span>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="card-action-btn">催交</button>
+        <button class="card-action-btn">编辑</button>
+        <button class="card-action-btn btn-set">设置 <span class="dropdown-arrow">&#9662;</span></button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="class-row">
+        <span class="class-name">0930测试班</span>
+        <div class="info-col">
+          <span class="info-label">发布时间</span>
+          <span class="info-value time">2026-04-23 19:27:48</span>
+        </div>
+        <div class="info-col">
+          <span class="info-label">截止时间</span>
+          <span class="info-value">无截止时间</span>
+        </div>
+        <div class="info-col">
+          <span class="info-label">发布状态</span>
+          <div class="status-item">
+            <span class="status-dot green"></span>
+            <span class="status-text">已发布</span>
+          </div>
+        </div>
+        <div class="info-col">
+          <span class="info-label">完成情况</span>
+          <span class="progress-ratio">1/1</span>
+        </div>
+        <div class="action-links">
+          <a class="action-link">详情</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 卡片5：练习（语文试卷） -->
+  <div class="task-card">
+    <div class="card-header">
+      <div class="card-type-badge 练习">
+        <span class="badge-subject">练习</span>
+      </div>
+      <div class="card-header-info">
+        <div class="card-title">
+          高中202412月考语文试卷
+          <span style="color:#909399;font-size:13px;font-weight:400;">教师批阅</span>
+          <span style="color:#909399;font-size:13px;font-weight:400;">类型：作业</span>
+          <span style="color:#909399;font-size:13px;font-weight:400;">课程：【TEST】AIPT线上测试（04测试）</span>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="card-action-btn">催交</button>
+        <button class="card-action-btn">预览</button>
+        <button class="card-action-btn">编辑</button>
+        <button class="card-action-btn btn-set">设置 <span class="dropdown-arrow">&#9662;</span></button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="class-row">
+        <span class="class-name">0221测试班</span>
+        <div class="info-col">
+          <span class="info-label">发布时间</span>
+          <span class="info-value time">2026-01-13 16:59:53</span>
+        </div>
+        <div class="info-col">
+          <span class="info-label">截止时间</span>
+          <span class="info-value">无截止时间</span>
+        </div>
+        <div class="info-col">
+          <span class="info-label">发布状态</span>
+          <div class="status-item">
+            <span class="status-dot green"></span>
+            <span class="status-text">已发布</span>
+          </div>
+        </div>
+        <div class="info-col">
+          <span class="info-label">完成情况</span>
+          <span class="progress-ratio low">1/1</span>
+        </div>
+        <div class="score-info">
+          <span class="score-label">得分率</span>
+          <span class="score-value">0%</span>
+        </div>
+        <div class="batch-info">
+          <span class="batch-label">待批阅</span>
+          <span class="batch-count">1</span>
+        </div>
+        <div class="action-links">
+          <a class="action-link" style="color:#67c23a;">批阅</a>
+          <span class="action-sep">|</span>
+          <a class="action-link">详情</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 卡片6：语文默写 - 未发布 -->
+  <div class="task-card">
+    <div class="card-header">
+      <div class="card-type-badge 语文默写">
+        <span class="badge-subject">语文</span>
+        <span class="badge-type">默写</span>
+      </div>
+      <div class="card-header-info">
+        <div class="card-title">
+          已选择：《屈原列传》第三段
+          <span style="color:#909399;font-size:13px;font-weight:400;">AI批阅</span>
+          <span style="color:#909399;font-size:13px;font-weight:400;">类型：作业</span>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="card-action-btn">编辑</button>
+        <button class="card-action-btn btn-set">设置 <span class="dropdown-arrow">&#9662;</span></button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="class-row">
+        <span class="class-name">0221测试班</span>
+        <div class="info-col">
+          <span class="info-label">发布时间</span>
+          <span class="info-value time" style="color:#e6a23c;">稍后发布</span>
+        </div>
+        <div class="info-col">
+          <span class="info-label">截止时间</span>
+          <span class="info-value">无截止时间</span>
+        </div>
+        <div class="info-col">
+          <span class="info-label">发布状态</span>
+          <div class="status-item">
+            <span class="status-dot yellow"></span>
+            <span class="status-text">未到发布时间</span>
+          </div>
+        </div>
+        <div class="info-col">
+          <span class="info-label">完成情况</span>
+          <span class="progress-ratio low">0/2</span>
+        </div>
+        <div class="score-info">
+          <span class="score-label">得分率</span>
+          <span class="score-value dash">--</span>
+        </div>
+        <div class="action-links">
+          <a class="action-link publish-link">发布</a>
+          <span class="action-sep">|</span>
+          <a class="action-link">详情</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 分页 -->
+<div class="pagination-area">
+  <span class="page-total">共 6 条</span>
+  <button class="page-btn" disabled>&lt;</button>
+  <button class="page-btn active">1</button>
+  <button class="page-btn">&gt;</button>
+</div>
+</div><!-- /content-wrapper -->
+
+<!-- 发布任务弹窗 -->
+<div id="publishModal" class="publish-modal-overlay hidden">
+  <div class="publish-modal">
+    <!-- 通用任务 -->
+    <div class="publish-modal-section">
+      <div class="publish-modal-title">通用任务</div>
+      <div class="publish-task-grid">
+        <button class="publish-task-btn">练习</button>
+        <button class="publish-task-btn">测验</button>
+        <button class="publish-task-btn">答题卡</button>
+        <button class="publish-task-btn">分层作业</button>
+        <button class="publish-task-btn">错题重练</button>
+        <button class="publish-task-btn">资料</button>
+      </div>
+    </div>
+    <!-- 学科任务 -->
+    <div class="publish-modal-section">
+      <div class="publish-modal-title">学科任务</div>
+      <div class="publish-task-grid">
+        <button class="publish-task-btn chinese">语文默写</button>
+        <button class="publish-task-btn english">英语单词</button>
+        <button class="publish-task-btn chinese">语文阅读</button>
+        <button class="publish-task-btn english">英语阅读</button>
+        <button class="publish-task-btn chinese" id="btn-publish-chinese-essay">语文作文</button>
+        <button class="publish-task-btn english">英语作文</button>
+        <button class="publish-task-btn math">数学精准学</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 删除确认弹窗 -->
+<div id="deleteDialog" class="dialog-overlay hidden">
+  <div class="dialog-box">
+    <div class="dialog-header">
+      <span class="dialog-title">提示</span>
+      <button class="dialog-close" onclick="closeDeleteDialog()">&times;</button>
+    </div>
+    <div class="dialog-content">
+      <div class="dialog-msg">确定要删除任务吗？<br>删除后暂不可恢复，且学生端该任务也同时被删除。</div>
+    </div>
+    <div class="dialog-footer">
+      <button class="dialog-btn dialog-btn-cancel" onclick="closeDeleteDialog()">取消</button>
+      <button class="dialog-btn dialog-btn-confirm" onclick="confirmDelete()">确定删除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 删除弹窗
+  function openDeleteDialog() {
+    document.getElementById('deleteDialog').classList.remove('hidden');
+    // 关闭所有下拉菜单
+    document.querySelectorAll('.dropdown-menu').forEach(function(m) { m.classList.remove('show'); });
+  }
+  function closeDeleteDialog() {
+    document.getElementById('deleteDialog').classList.add('hidden');
+  }
+  function confirmDelete() {
+    closeDeleteDialog();
+    // TODO: 对接后端删除接口
+    alert('任务已删除');
+  }
+
+  // 发布任务弹窗
+  const publishModal = document.getElementById('publishModal');
+  document.querySelector('.btn-publish').addEventListener('click', function(e) {
+    e.stopPropagation();
+    publishModal.classList.remove('hidden');
+  });
+  publishModal.addEventListener('click', function(e) {
+    if (e.target === this) this.classList.add('hidden');
+  });
+
+  // 语文作文按钮跳转
+  document.getElementById('btn-publish-chinese-essay').addEventListener('click', function() {
+    window.location.href = '语文作文_全日制_发布任务.html';
+  });
+
+  // 下拉菜单切换
+  document.querySelectorAll('[data-toggle]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var menuId = this.getAttribute('data-toggle');
+      var menu = document.getElementById(menuId);
+      // 关闭其他下拉
+      document.querySelectorAll('.dropdown-menu').forEach(function(m) {
+        if (m.id !== menuId) m.classList.remove('show');
+      });
+      menu.classList.toggle('show');
+    });
+  });
+
+  // 点击其他地方关闭下拉
+  document.addEventListener('click', function() {
+    document.querySelectorAll('.dropdown-menu').forEach(function(m) { m.classList.remove('show'); });
+  });
+</script>
+
+</body>
+</html>

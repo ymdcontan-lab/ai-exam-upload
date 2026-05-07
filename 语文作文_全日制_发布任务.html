@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>发布语文作文任务</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f5f7fa;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+  .container {
+    width: 780px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    padding: 32px 40px 40px;
+  }
+  .modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eee;
+  }
+
+  /* 步骤条 */
+  .steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 36px;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #c0c4cc;
+  }
+  .step.active .step-circle {
+    background: #1AC2A3;
+    color: #fff;
+    border-color: #1AC2A3;
+  }
+  .step.active .step-label { color: #303133; font-weight: 600; }
+  .step.done .step-circle {
+    background: #1AC2A3;
+    color: #fff;
+    border-color: #1AC2A3;
+  }
+  .step.done .step-label { color: #606266; }
+  .step-circle {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid #c0c4cc;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+    margin-right: 8px;
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+  .step-line {
+    width: 100px;
+    height: 1px;
+    background: #e4e7ed;
+    margin: 0 12px;
+    flex-shrink: 0;
+  }
+
+  /* 表单 */
+  .form-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 22px;
+  }
+  .form-label {
+    width: 140px;
+    flex-shrink: 0;
+    text-align: right;
+    padding-right: 12px;
+    line-height: 32px;
+    font-size: 14px;
+    color: #606266;
+  }
+  .form-label .required {
+    color: #f56c6c;
+    margin-right: 2px;
+  }
+  .form-control {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* 输入框 */
+  input[type="text"],
+  input[type="number"],
+  select {
+    height: 32px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    padding: 0 12px;
+    font-size: 14px;
+    color: #606266;
+    outline: none;
+    transition: border-color 0.2s;
+    background: #fff;
+  }
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  select:focus {
+    border-color: #1AC2A3;
+  }
+  input[type="text"],
+  input[type="number"] {
+    width: 200px;
+  }
+  select {
+    width: 240px;
+    cursor: pointer;
+  }
+  .input-hint {
+    font-size: 12px;
+    color: #c0c4cc;
+    margin-left: 12px;
+    line-height: 32px;
+  }
+
+  /* 单选按钮 - 仿 Element UI */
+  .radio-group {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+  .radio-item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #606266;
+    user-select: none;
+  }
+  .radio-item input[type="radio"] {
+    display: none;
+  }
+  .radio-dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 2px solid #dcdfe6;
+    margin-right: 6px;
+    position: relative;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .radio-item:hover .radio-dot {
+    border-color: #1AC2A3;
+  }
+  .radio-item input[type="radio"]:checked + .radio-dot {
+    border-color: #1AC2A3;
+    background: #1AC2A3;
+  }
+  .radio-item input[type="radio"]:checked + .radio-dot::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #fff;
+  }
+
+  /* 富文本编辑器 */
+  .rich-editor {
+    width: 100%;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .editor-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    background: #fafafa;
+    border-bottom: 1px solid #dcdfe6;
+    gap: 2px;
+  }
+  .editor-btn {
+    width: 30px; height: 30px;
+    border: 1px solid transparent;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: #909399;
+    transition: all 0.2s;
+  }
+  .editor-btn:hover {
+    background: #eee;
+    color: #606266;
+  }
+  .editor-divider {
+    width: 1px;
+    height: 20px;
+    background: #e4e7ed;
+    margin: 0 4px;
+  }
+  .editor-body {
+    min-height: 120px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 12px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #303133;
+    outline: none;
+  }
+  .editor-body::-webkit-scrollbar {
+    width: 6px;
+  }
+  .editor-body::-webkit-scrollbar-thumb {
+    background: #c0c4cc;
+    border-radius: 3px;
+  }
+  .editor-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 4px 12px;
+    background: #fafafa;
+    border-top: 1px solid #eee;
+    font-size: 12px;
+    color: #c0c4cc;
+  }
+
+  /* 自主命题区域 */
+  .auto-topic-section {
+    margin-top: 4px;
+    margin-bottom: 20px;
+  }
+  .auto-topic-section .form-group {
+    margin-bottom: 22px;
+  }
+  .auto-topic-section .form-group:last-child {
+    margin-bottom: 0;
+  }
+
+  /* 作文主题库选择区域 */
+  #topicSelectArea {
+    align-items: flex-start;
+  }
+  .topic-select-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+  .topic-selected-info {
+    flex: 1;
+    padding: 8px 14px;
+    background: #f5f7fa;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #606266;
+    line-height: 1.6;
+  }
+  .topic-selected-info .topic-empty {
+    color: #c0c4cc;
+  }
+  .topic-selected-info .topic-exam-topic {
+    font-weight: 600;
+    color: #303133;
+    font-size: 14px;
+  }
+  .topic-selected-info .topic-sep {
+    margin: 0 8px;
+    color: #909399;
+  }
+  .topic-selected-info .topic-material {
+    margin-top: 6px;
+    color: #606266;
+    font-size: 12px;
+  }
+  .select-topic-btn {
+    height: 32px;
+    padding: 0 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid #1AC2A3;
+    background: #fff;
+    color: #1AC2A3;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .select-topic-btn:hover {
+    background: #1AC2A3;
+    color: #fff;
+  }
+
+  /* 按钮 */
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+  .btn {
+    height: 36px;
+    padding: 0 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    line-height: 34px;
+  }
+  .btn-default {
+    background: #fff;
+    border-color: #dcdfe6;
+    color: #606266;
+  }
+  .btn-default:hover {
+    border-color: #c0c4cc;
+    color: #606266;
+  }
+  .btn-primary {
+    background: #1AC2A3;
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: #3dd4bb;
+  }
+
+  /* 切换显示控制 */
+  .hidden { display: none !important; }
+
+  /* 弹窗遮罩 */
+  .dialog-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .dialog-overlay.hidden { display: none !important; }
+
+  /* 弹窗 */
+  .dialog {
+    width: 900px;
+    max-height: 80vh;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid #eee;
+  }
+  .dialog-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+  }
+  .dialog-close {
+    width: 28px; height: 28px;
+    border: none;
+    background: none;
+    font-size: 18px;
+    color: #909399;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+  .dialog-close:hover { background: #f5f5f5; }
+
+  .dialog-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  /* 弹窗筛选项 */
+  .dialog-filters {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .dialog-filters select {
+    width: 180px;
+  }
+  .dialog-filters input[type="text"] {
+    width: 260px;
+  }
+
+  /* 弹窗表格 */
+  .topic-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .topic-table th {
+    background: #f5f7fa;
+    color: #606266;
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #ebeef5;
+  }
+  .topic-table th:nth-child(1) { width: 220px; }
+  .topic-table th:nth-child(2) { width: 120px; }
+  .topic-table th:nth-child(4) { width: 70px; text-align: center; }
+  .topic-table td {
+    padding: 12px;
+    border-bottom: 1px solid #ebeef5;
+    color: #303133;
+    vertical-align: top;
+  }
+  .topic-table td:last-child { text-align: center; }
+  .topic-table tr:hover td { background: #f5f7fa; }
+  .topic-table .exam-name {
+    font-size: 13px;
+    color: #303133;
+    font-weight: 500;
+  }
+  .topic-table .topic-name-cell {
+    color: #1AC2A3;
+    font-weight: 600;
+  }
+  .topic-table .material-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: #606266;
+    line-height: 1.6;
+    font-size: 12px;
+  }
+
+  .btn-quote {
+    padding: 0 12px;
+    height: 28px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid #1AC2A3;
+    background: #fff;
+    color: #1AC2A3;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-quote:hover {
+    background: #1AC2A3;
+    color: #fff;
+  }
+
+  /* 弹窗底部分页 */
+  .dialog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    border-top: 1px solid #eee;
+    background: #fafafa;
+  }
+  .pagination {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #606266;
+  }
+  .page-btn {
+    min-width: 28px;
+    height: 28px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    color: #606266;
+    transition: all 0.2s;
+  }
+  .page-btn:hover { border-color: #1AC2A3; color: #1AC2A3; }
+  .page-btn.active { background: #1AC2A3; color: #fff; border-color: #1AC2A3; }
+  .page-btn:disabled { cursor: not-allowed; color: #c0c4cc; border-color: #ebeef5; }
+  .page-info { color: #909399; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="modal-title">发布语文作文任务</div>
+
+  <!-- 步骤条 -->
+  <div class="steps">
+    <div class="step active">
+      <span class="step-circle">1</span>
+      <span class="step-label">配置任务信息</span>
+    </div>
+    <span class="step-line"></span>
+    <div class="step">
+      <span class="step-circle">2</span>
+      <span class="step-label">选择学生/班级</span>
+    </div>
+    <span class="step-line"></span>
+    <div class="step">
+      <span class="step-circle">3</span>
+      <span class="step-label">设置发布时间</span>
+    </div>
+  </div>
+
+  <!-- 表单区域 -->
+  <div class="form-content">
+    <!-- 学届 -->
+    <div class="form-group">
+      <label class="form-label"><span class="required">*</span>学届：</label>
+      <div class="form-control">
+        <select>
+          <option>2025-2026</option>
+          <option>2024-2025</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 任务名称 -->
+    <div class="form-group">
+      <label class="form-label"><span class="required">*</span>任务名称：</label>
+      <div class="form-control">
+        <input type="text" placeholder="请输入任务名称" style="width:480px;" value="难忘的那一次">
+      </div>
+    </div>
+
+    <!-- 课程 -->
+    <div class="form-group">
+      <label class="form-label">课程：</label>
+      <div class="form-control">
+        <select style="width:200px;">
+          <option>阿凡题初一语文测试</option>
+        </select>
+        <select style="width:200px;">
+          <option>请选择</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 练习类型 -->
+    <div class="form-group">
+      <label class="form-label"><span class="required">*</span>练习类型：</label>
+      <div class="form-control">
+        <div class="radio-group">
+          <label class="radio-item">
+            <input type="radio" name="practiceType" value="课前测">
+            <span class="radio-dot"></span>课前测
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="practiceType" value="堂练">
+            <span class="radio-dot"></span>堂练
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="practiceType" value="出门测">
+            <span class="radio-dot"></span>出门测
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="practiceType" value="作业" checked>
+            <span class="radio-dot"></span>作业
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 作文体裁 -->
+    <div id="gradeGenreRow" class="form-group">
+      <label class="form-label"><span class="required">*</span>作文体裁：</label>
+      <div class="form-control">
+        <select id="gradeSelect" style="width:160px;">
+          <option value="">请选择年级</option>
+          <optgroup label="小学">
+            <option value="三年级">三年级</option>
+            <option value="四年级">四年级</option>
+            <option value="五年级">五年级</option>
+            <option value="六年级">六年级</option>
+          </optgroup>
+          <optgroup label="初中">
+            <option value="初一" selected>初一</option>
+            <option value="初二">初二</option>
+            <option value="初三">初三</option>
+            <option value="初四">初四</option>
+          </optgroup>
+          <optgroup label="高中">
+            <option value="高一">高一</option>
+            <option value="高二">高二</option>
+            <option value="高三">高三</option>
+            <option value="高四">高四</option>
+          </optgroup>
+        </select>
+        <select id="genreSelect" style="width:160px;">
+          <option>体裁不限</option>
+          <option selected>记叙文</option>
+          <option>议论文</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 自主命题字段 -->
+    <div id="autoTopicFields" class="auto-topic-section">
+      <!-- 作文满分 -->
+      <div class="form-group">
+        <label class="form-label"><span class="required">*</span>作文满分：</label>
+        <div class="form-control">
+          <input type="number" placeholder="请输入作文满分" value="60">
+          <span class="input-hint">（请填写&gt;0且&lt;=1000的整数）</span>
+        </div>
+      </div>
+
+      <!-- 字数要求 -->
+      <div class="form-group">
+        <label class="form-label"><span class="required">*</span>字数要求：</label>
+        <div class="form-control">
+          <input type="number" placeholder="请输入最低字数" value="600">
+          <span class="input-hint">（请填写&gt;0的整数）</span>
+        </div>
+      </div>
+
+      <!-- 作文题目/材料 -->
+      <div class="form-group">
+        <label class="form-label"><span class="required">*</span>作文题目/材料：</label>
+        <div class="form-control" style="flex-direction:column;">
+          <div class="rich-editor" style="width:560px;">
+            <div class="editor-toolbar">
+              <button class="editor-btn" title="插入图片">&#x1F5BC;</button>
+              <span class="editor-divider"></span>
+              <button class="editor-btn" title="左对齐">&#x2261;</button>
+              <button class="editor-btn" title="居中">&#x2630;</button>
+              <button class="editor-btn" title="右对齐">&#x2261;</button>
+              <button class="editor-btn" title="两端对齐">&#x2630;</button>
+            </div>
+            <div class="editor-body" contenteditable="true">
+              以"难忘的那一次"为题，写一篇记叙文。要求：&#x2460;选材真实，内容具体；&#x2461;要有真情实感；&#x2462;不少于600字；&#x2463;文中不得出现真实的人名、校名和地名。
+            </div>
+            <div class="editor-footer">156/2000</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部按钮 -->
+  <div class="modal-actions">
+    <button class="btn btn-default" id="btnCancel">取消</button>
+    <button class="btn btn-primary" id="btnNext">下一步</button>
+  </div>
+</div>
+
+
+<script>
+  // 取消 / 下一步按钮
+  document.getElementById('btnCancel').addEventListener('click', () => {
+    window.location.href = '语文作文_全日制_任务列表.html';
+  });
+  document.getElementById('btnNext').addEventListener('click', () => {
+    window.location.href = '语文作文_全日制_任务列表.html';
+  });
+</script>
+</body>
+</html>

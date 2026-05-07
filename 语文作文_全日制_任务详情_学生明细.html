@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>任务详情--学生明细</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f5f7fa;
+    color: #303133;
+    min-height: 100vh;
+  }
+
+  /* ========== 顶部导航 ========== */
+  .top-bar {
+    height: 56px;
+    background: #fff;
+    border-bottom: 1px solid #e4e7ed;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .top-bar .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 48px;
+    cursor: pointer;
+  }
+  .top-bar .logo {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1AC2A3;
+  }
+  .top-bar .logo-divider {
+    font-size: 14px;
+    color: #606266;
+    margin: 0 2px;
+  }
+  .top-bar .logo-product {
+    font-size: 14px;
+    color: #606266;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .top-bar .nav-center {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex: 1;
+  }
+  .top-bar .nav-item {
+    font-size: 14px;
+    color: #606266;
+    cursor: pointer;
+    height: 56px;
+    line-height: 56px;
+    padding: 0 18px;
+    position: relative;
+    white-space: nowrap;
+  }
+  .top-bar .nav-item:hover { color: #1AC2A3; }
+  .top-bar .nav-item.active {
+    color: #1AC2A3;
+    font-weight: 600;
+  }
+  .top-bar .nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 3px;
+    background: #1AC2A3;
+    border-radius: 2px;
+  }
+  .top-bar .nav-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: #909399;
+  }
+  .top-bar .nav-right .bell { cursor: pointer; font-size: 16px; color: #909399; }
+  .top-bar .nav-right .user-name { color: #606266; cursor: pointer; }
+  .top-bar .nav-right .logout { color: #1AC2A3; cursor: pointer; }
+
+  /* ========== 面包屑 ========== */
+  .breadcrumb {
+    padding: 14px 24px 0;
+    max-width: 1200px;
+    margin: 0 auto;
+    font-size: 13px;
+    color: #909399;
+  }
+  .breadcrumb a { color: #909399; text-decoration: none; }
+  .breadcrumb a:hover { color: #1AC2A3; }
+  .breadcrumb .sep { color: #c0c4cc; margin: 0 6px; }
+  .breadcrumb .current { color: #303133; }
+
+  /* 主内容区 */
+  .main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 12px 24px 40px;
+  }
+
+  /* ========== 任务信息卡片 ========== */
+  .task-info-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .task-info-row-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .task-class-select {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .task-class-select .arrow { font-size: 10px; color: #909399; }
+  .task-info-row {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    font-size: 13px;
+    flex-wrap: wrap;
+  }
+  .task-info-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .task-info-item .label { color: #909399; }
+  .task-info-item .value { color: #303133; font-weight: 500; }
+  .task-info-item .value.link { color: #67c23a; cursor: pointer; }
+  .task-info-item .value.link:hover { text-decoration: underline; }
+
+  /* ========== Tab导航 ========== */
+  .tab-bar {
+    display: flex;
+    background: #fff;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    margin-top: 0;
+  }
+  .tab-item {
+    padding: 14px 28px;
+    font-size: 14px;
+    color: #606266;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .tab-item.active {
+    color: #1AC2A3;
+    border-bottom-color: #1AC2A3;
+    font-weight: 600;
+  }
+  .tab-item:hover { color: #1AC2A3; }
+
+  /* ========== Tab内容区 ========== */
+  .tab-content {
+    background: #fff;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    padding: 20px;
+  }
+
+  /* ========== 提示文字 ========== */
+  .hint-text {
+    font-size: 13px;
+    color: #f56c6c;
+    margin-bottom: 8px;
+  }
+
+  /* ========== 筛选 & 搜索行 ========== */
+  .filter-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .filter-select {
+    height: 32px;
+    padding: 0 28px 0 10px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%23909399' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 8px center;
+    font-size: 13px;
+    color: #606266;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .filter-select:focus { border-color: #1AC2A3; }
+  .search-box {
+    display: flex;
+    align-items: center;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    overflow: hidden;
+    width: 180px;
+    transition: border-color 0.2s;
+  }
+  .search-box:focus-within {
+    border-color: #1AC2A3;
+  }
+  .search-box input {
+    flex: 1;
+    height: 32px;
+    border: none;
+    outline: none;
+    padding: 0 10px;
+    font-size: 13px;
+    color: #303133;
+  }
+  .search-box input::placeholder {
+    color: #c0c4cc;
+  }
+  .search-box .search-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #909399;
+    font-size: 15px;
+    transition: color 0.2s;
+    background: #fff;
+    border: none;
+  }
+  .search-box .search-btn:hover {
+    color: #1AC2A3;
+  }
+
+  /* ========== 表格 ========== */
+  .student-table-wrapper {
+    overflow-x: auto;
+  }
+  .student-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .student-table thead th {
+    background: #f5f7fa;
+    color: #909399;
+    font-weight: 500;
+    text-align: center;
+    padding: 10px 6px;
+    border: 1px solid #ebeef5;
+    white-space: nowrap;
+    position: relative;
+  }
+  .student-table tbody td {
+    text-align: center;
+    padding: 10px 6px;
+    border: 1px solid #ebeef5;
+    color: #606266;
+    white-space: nowrap;
+  }
+  .student-table tbody tr:hover {
+    background: #fafafa;
+  }
+
+  /* 复选框 */
+  .student-table input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #1AC2A3;
+  }
+
+  /* 表头排序图标 */
+  .th-inner {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+  }
+  .th-inner .sort-arrow {
+    font-size: 9px;
+    color: #c0c4cc;
+    line-height: 1;
+  }
+
+  /* 状态标签 */
+  .status-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .status-tag.status-not-submitted {
+    background: #fef0f0;
+    color: #f56c6c;
+  }
+  .status-tag.status-ai-not-started {
+    background: #fdf6ec;
+    color: #e6a23c;
+  }
+  .status-tag.status-ai-grading {
+    background: #ecf5ff;
+    color: #409eff;
+  }
+  .status-tag.status-ai-done {
+    background: #e8f8f4;
+    color: #1AC2A3;
+  }
+  .status-tag.status-ai-fail {
+    background: #fef0f0;
+    color: #f56c6c;
+    position: relative;
+  }
+  .status-tag.status-review-done {
+    background: #ecf5ff;
+    color: #409eff;
+  }
+
+  /* 链接样式 */
+  .link-action {
+    color: #409eff;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .link-action:hover {
+    color: #66b1ff;
+    text-decoration: underline;
+  }
+  .link-action.disabled {
+    color: #c0c4cc;
+    cursor: not-allowed;
+  }
+  .link-action.disabled:hover {
+    text-decoration: none;
+  }
+
+  /* 操作列：多个链接 */
+  .action-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex-wrap: nowrap;
+  }
+  .action-links .link-action {
+    margin: 0 2px;
+  }
+
+  /* 分数问号提示 */
+  .score-help {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+    text-align: center;
+    border-radius: 50%;
+    border: 1px solid #c0c4cc;
+    color: #909399;
+    font-size: 10px;
+    cursor: pointer;
+    margin-left: 2px;
+    vertical-align: middle;
+    position: relative;
+  }
+  .score-help .fail-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    border: 1px solid #e4e7ed;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    padding: 12px 16px;
+    z-index: 10;
+    font-size: 12px;
+    color: #606266;
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .score-help .fail-tooltip .fail-tip-text {
+    display: block;
+    white-space: nowrap;
+  }
+  .score-help .fail-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #fff;
+  }
+  .score-help .fail-tooltip.show {
+    display: flex;
+  }
+  .score-help .fail-tooltip .retry-btn {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 4px 18px;
+    border: 1px solid #1AC2A3;
+    border-radius: 4px;
+    background: #fff;
+    color: #1AC2A3;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .score-help .fail-tooltip .retry-btn:hover {
+    background: #1AC2A3;
+    color: #fff;
+  }
+
+  /* ========== Toast 提示 ========== */
+  .toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(0,0,0,0.72);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ========== 底部批量操作栏 ========== */
+  .batch-bar {
+    display: flex;
+    align-items: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: #606266;
+    gap: 16px;
+  }
+  .batch-bar .selected-count {
+    color: #909399;
+  }
+  .batch-bar .selected-count span {
+    color: #303133;
+    font-weight: 600;
+  }
+  .batch-bar .batch-action {
+    color: #409eff;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .batch-bar .batch-action:hover {
+    text-decoration: underline;
+  }
+
+  /* ========== 通用弹窗 ========== */
+  .dialog-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .dialog-overlay.show {
+    display: flex;
+  }
+  .dialog-box {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    overflow: hidden;
+  }
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+  }
+  .dialog-header .dialog-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+  }
+  .dialog-close {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    font-size: 18px;
+    color: #909399;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+  .dialog-close:hover {
+    color: #606266;
+  }
+  .dialog-body {
+    padding: 24px 20px;
+    font-size: 14px;
+    line-height: 2;
+    color: #303133;
+  }
+
+  /* ========== 1. 查看原图弹窗 ========== */
+  .image-viewer-dialog {
+    width: 700px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .image-viewer-body {
+    padding: 20px;
+    text-align: center;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .image-viewer-body img {
+    max-width: 100%;
+    max-height: 60vh;
+    border-radius: 4px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  }
+  .image-viewer-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px 16px;
+    border-top: 1px solid #f0f0f0;
+  }
+  .image-viewer-nav button {
+    height: 36px;
+    padding: 0 20px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    background: #fff;
+    color: #606266;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .image-viewer-nav button:hover {
+    border-color: #1AC2A3;
+    color: #1AC2A3;
+  }
+  .image-viewer-nav button:disabled {
+    color: #c0c4cc;
+    border-color: #e4e7ed;
+    cursor: not-allowed;
+  }
+  .image-viewer-nav .image-counter {
+    line-height: 36px;
+    color: #909399;
+    font-size: 13px;
+  }
+
+  /* ========== 2. AI润色弹窗 ========== */
+  .polish-dialog {
+    width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .polish-dialog .dialog-header {
+    position: relative;
+    justify-content: center;
+  }
+  .polish-dialog .dialog-header .dialog-close {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .polish-header-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .polish-header-nav .student-nav-arrow {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    color: #606266;
+    font-size: 14px;
+    transition: all 0.2s;
+    padding: 0;
+    margin: 0;
+  }
+  .polish-header-nav .student-nav-arrow:hover {
+    border-color: #1AC2A3;
+    color: #1AC2A3;
+  }
+  .polish-header-nav .student-nav-arrow:disabled {
+    color: #c0c4cc;
+    border-color: #e4e7ed;
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+  .polish-header-nav .student-nav-label {
+    font-size: 13px;
+    color: #606266;
+  }
+  .polish-body {
+    display: flex;
+    gap: 0;
+    padding: 20px;
+    min-height: 500px;
+    max-height: calc(90vh - 120px);
+  }
+  .polish-left {
+    flex: 0 0 45%;
+    border-right: 1px solid #eee;
+    padding-right: 20px;
+    overflow-y: auto;
+  }
+  .polish-left .polish-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .polish-left .polish-section-title .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .polish-left img {
+    max-width: 100%;
+    border-radius: 4px;
+    display: block;
+  }
+  .polish-right {
+    flex: 1;
+    padding-left: 20px;
+    overflow-y: auto;
+  }
+  .polish-right .polish-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .polish-right .polish-section-title .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .polish-text p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #303133;
+    text-indent: 2em;
+    margin: 0;
+  }
+  .polish-text .polish-title {
+    text-indent: 0;
+    text-align: center;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .polish-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 20px;
+    border-top: 1px solid #f0f0f0;
+    gap: 12px;
+  }
+  .btn-default {
+    height: 36px;
+    padding: 0 24px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    background: #fff;
+    color: #606266;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-default:hover {
+    border-color: #1AC2A3;
+    color: #1AC2A3;
+  }
+  .btn-primary {
+    height: 36px;
+    padding: 0 24px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: #1AC2A3;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover {
+    background: #15a88d;
+  }
+
+  /* ========== 3. 查看报告弹窗 ========== */
+  .report-dialog {
+    width: 1000px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .report-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    background: #f5f7fa;
+    border-bottom: 1px solid #eee;
+    position: relative;
+  }
+  .report-header-bar .nav-arrow {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    color: #606266;
+    font-size: 16px;
+    transition: all 0.2s;
+  }
+  .report-header-bar .nav-arrow:hover {
+    border-color: #1AC2A3;
+    color: #1AC2A3;
+  }
+  .report-header-bar .nav-arrow.prev { left: calc(50% - 120px); }
+  .report-header-bar .nav-arrow.next { right: calc(50% - 120px); }
+  .report-header-bar .student-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+  }
+  .report-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .report-title {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #303133;
+    margin-bottom: 24px;
+  }
+  .report-layout {
+    display: flex;
+    gap: 32px;
+  }
+  .report-left {
+    flex: 0 0 48%;
+  }
+  .report-right {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* 报告-左侧图片 */
+  .report-image-tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .report-image-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .report-image-tag.tag-idiom {
+    background: #fef7e8;
+    color: #e6a23c;
+  }
+  .report-image-tag.tag-sunshine {
+    background: #fdf6ec;
+    color: #e6a23c;
+  }
+  .report-image-tag.tag-rhyme {
+    background: #fef0f0;
+    color: #f56c6c;
+  }
+  .report-image-tag .tag-icon {
+    font-size: 14px;
+  }
+  .report-image-wrapper {
+    position: relative;
+    background: #faf6f1;
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 16px;
+  }
+  .report-image-wrapper img {
+    width: 100%;
+    display: block;
+    border-radius: 4px;
+  }
+
+  /* 报告-右侧评分 */
+  .report-score-section {
+    margin-bottom: 24px;
+  }
+  .report-score-section .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: inline-block;
+    padding: 2px 12px;
+    background: #e8f8f4;
+    border-radius: 4px;
+  }
+  .score-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+  }
+  .score-total .score-big {
+    font-size: 36px;
+    font-weight: 700;
+    color: #f56c6c;
+    line-height: 1;
+  }
+  .score-total .score-max {
+    font-size: 14px;
+    color: #909399;
+    margin-left: 2px;
+  }
+  .score-dimensions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .score-dim-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+  }
+  .score-dim-row .dim-label {
+    width: 72px;
+    color: #606266;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .score-dim-row .dim-stars {
+    display: flex;
+    gap: 2px;
+  }
+  .dim-stars .star {
+    font-size: 14px;
+    color: #e6a23c;
+  }
+  .dim-stars .star.empty {
+    color: #e4e7ed;
+  }
+
+  /* 报告-总评 */
+  .report-summary-section {
+    margin-bottom: 24px;
+  }
+  .report-summary-section .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 12px;
+    display: inline-block;
+    padding: 2px 12px;
+    background: #e8f8f4;
+    color: #1AC2A3;
+    border-radius: 4px;
+  }
+  .report-summary-text {
+    font-size: 13px;
+    line-height: 2;
+    color: #606266;
+  }
+
+  /* 报告-修改建议 */
+  .report-suggestion-section {
+    margin-bottom: 24px;
+  }
+  .report-suggestion-section .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 12px;
+    display: inline-block;
+    padding: 2px 12px;
+    background: #ecf5ff;
+    color: #409eff;
+    border-radius: 4px;
+  }
+  .report-suggestion-item {
+    margin-bottom: 16px;
+  }
+  .report-suggestion-item .suggestion-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 6px;
+  }
+  .report-suggestion-item .suggestion-text {
+    font-size: 13px;
+    line-height: 1.8;
+    color: #606266;
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== 顶部导航 ========== -->
+<div class="top-bar">
+  <div class="logo-area">
+    <div class="logo">鲸准教</div>
+    <span class="logo-divider">|</span>
+    <div class="logo-product">E教学 <span style="font-size:10px;color:#909399;">&#9660;</span></div>
+  </div>
+  <div class="nav-center">
+    <div class="nav-item">我的班级</div>
+    <div class="nav-item">备课</div>
+    <div class="nav-item">授课</div>
+    <div class="nav-item active">任务</div>
+    <div class="nav-item">学情</div>
+    <div class="nav-item">我的学习</div>
+    <div class="nav-item">资源平台</div>
+    <div class="nav-item" style="color:#1AC2A3;">Ai助教</div>
+  </div>
+  <div class="nav-right">
+    <span class="bell">&#128276;</span>
+    <span class="user-name">杨孟丹</span>
+    <span class="logout">退出</span>
+  </div>
+</div>
+
+<!-- 面包屑 -->
+<div class="breadcrumb">
+  <a href="#">首页</a>
+  <span class="sep">&gt;</span>
+  <a href="#">任务</a>
+  <span class="sep">&gt;</span>
+  <span class="current">这一刻，我终于长大。</span>
+</div>
+
+<!-- 主内容 -->
+<div class="main-content">
+
+  <!-- ========== 任务信息卡片 ========== -->
+  <div class="task-info-card">
+    <div class="task-info-row-top">
+      <div class="task-class-select">
+        0930测试班 <span class="arrow">&#9660;</span>
+      </div>
+    </div>
+    <div class="task-info-row">
+      <div class="task-info-item">
+        <span class="label">范围：</span>
+        <span class="value">全部</span>
+      </div>
+      <div class="task-info-item">
+        <span class="label">发布时间：</span>
+        <span class="value">2026-04-23 19:27:48</span>
+      </div>
+      <div class="task-info-item">
+        <span class="label">截止时间：</span>
+        <span class="value">无截止时间</span>
+      </div>
+      <div class="task-info-item">
+        <span class="label">作文题目/材料：</span>
+        <span class="value link" id="openEssayMaterial">点击查看</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Tab导航 ========== -->
+  <div class="tab-bar">
+    <div class="tab-item" onclick="switchTab('class')">作文详情</div>
+    <div class="tab-item active" onclick="switchTab('student')">学生明细</div>
+  </div>
+
+  <!-- ========== Tab内容：学生明细 ========== -->
+  <div class="tab-content" id="tabStudent">
+
+    <!-- 筛选 & 搜索 -->
+    <div class="filter-row">
+      <select class="filter-select" id="filterStatus">
+        <option value="">筛选状态</option>
+        <option value="未提交">未提交</option>
+        <option value="AI批阅中">AI批阅中</option>
+        <option value="AI批阅完成">AI批阅完成</option>
+        <option value="AI批阅失败">AI批阅失败</option>
+        <option value="老师审核完成">老师审核完成</option>
+      </select>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="学生姓名" />
+        <button class="search-btn">&#128269;</button>
+      </div>
+    </div>
+
+    <!-- 表格 -->
+    <div class="student-table-wrapper">
+      <table class="student-table">
+        <thead>
+          <tr>
+            <th style="width:36px;"><input type="checkbox" id="selectAll" /></th>
+            <th style="width:70px;">姓名</th>
+            <th style="width:110px;">学员编号</th>
+            <th style="width:100px;">
+              <span class="th-inner">任务状态 <span class="sort-arrow">&#9660;</span></span>
+            </th>
+            <th style="width:120px;">
+              <span class="th-inner">提交时间 <span class="sort-arrow">&#9660;</span></span>
+            </th>
+            <th style="width:100px;">
+              <span class="th-inner">AI批阅分数 <span class="sort-arrow">&#9660;</span></span>
+            </th>
+            <th style="width:100px;">
+              <span class="th-inner">老师审核分数 <span class="sort-arrow">&#9660;</span></span>
+            </th>
+            <th style="width:100px;">学生作文原图</th>
+            <th style="width:80px;">AI润色</th>
+            <th style="width:130px;">作文批阅报告</th>
+          </tr>
+        </thead>
+        <tbody id="studentTableBody">
+          <!-- 未提交 -->
+          <tr>
+            <td><input type="checkbox" /></td>
+            <td>江远</td>
+            <td>202104893330</td>
+            <td><span class="status-tag status-not-submitted">未提交</span></td>
+            <td>--</td>
+            <td>--</td>
+            <td>--</td>
+            <td><a class="link-action disabled" href="javascript:void(0)">查看原图</a></td>
+            <td><a class="link-action disabled" href="javascript:void(0)">查看</a></td>
+            <td>
+              <div class="action-links">
+                <a class="link-action disabled" href="javascript:void(0)">审核</a>
+                <a class="link-action disabled" href="javascript:void(0)">查看报告</a>
+              </div>
+            </td>
+          </tr>
+          <!-- AI批阅中 -->
+          <tr>
+            <td><input type="checkbox" /></td>
+            <td>江映雪</td>
+            <td>202104893330</td>
+            <td><span class="status-tag status-ai-grading">AI批阅中</span></td>
+            <td>2026-01-30 10:51</td>
+            <td>--</td>
+            <td>--</td>
+            <td><a class="link-action" href="javascript:void(0)" onclick="openImageViewer(0)">查看原图</a></td>
+            <td><a class="link-action disabled" href="javascript:void(0)">查看</a></td>
+            <td>
+              <div class="action-links">
+                <a class="link-action disabled" href="javascript:void(0)">审核</a>
+                <a class="link-action disabled" href="javascript:void(0)">查看报告</a>
+              </div>
+            </td>
+          </tr>
+          <!-- AI批阅完成 -->
+          <tr>
+            <td><input type="checkbox" /></td>
+            <td>王兴仁</td>
+            <td>202104893330</td>
+            <td><span class="status-tag status-ai-done">AI批阅完成</span></td>
+            <td>2026-01-30 10:51</td>
+            <td>47</td>
+            <td>--</td>
+            <td><a class="link-action" href="javascript:void(0)" onclick="openImageViewer(0)">查看原图</a></td>
+            <td><a class="link-action" href="javascript:void(0)" onclick="openPolishDialog(0)">查看</a></td>
+            <td>
+              <div class="action-links">
+                <a class="link-action" href="javascript:void(0)">审核</a>
+                <a class="link-action" href="javascript:void(0)" onclick="openReportDialog()">查看报告</a>
+              </div>
+            </td>
+          </tr>
+          <!-- AI批阅失败 -->
+          <tr>
+            <td><input type="checkbox" /></td>
+            <td>何一鸣</td>
+            <td>202104893330</td>
+            <td><span class="status-tag status-ai-fail">AI批阅失败 <span class="score-help" id="failHelpBtn">?<span class="fail-tooltip" id="failTooltip"><span class="fail-tip-text">批改失败</span><span class="retry-btn" id="retryBtn">重试</span></span></span></span></td>
+            <td>2026-01-30 10:51</td>
+            <td>--</td>
+            <td>--</td>
+            <td><a class="link-action" href="javascript:void(0)" onclick="openImageViewer(1)">查看原图</a></td>
+            <td><a class="link-action disabled" href="javascript:void(0)">查看</a></td>
+            <td>
+              <div class="action-links">
+                <a class="link-action" href="javascript:void(0)">审核</a>
+                <a class="link-action disabled" href="javascript:void(0)">查看报告</a>
+              </div>
+            </td>
+          </tr>
+          <!-- 老师审核完成 -->
+          <tr>
+            <td><input type="checkbox" /></td>
+            <td>陈梓月</td>
+            <td>202104893330</td>
+            <td><span class="status-tag status-review-done">老师审核完成</span></td>
+            <td>2026-01-30 10:51</td>
+            <td>47</td>
+            <td>47</td>
+            <td><a class="link-action" href="javascript:void(0)" onclick="openImageViewer(0)">查看原图</a></td>
+            <td><a class="link-action" href="javascript:void(0)" onclick="openPolishDialog(1)">查看</a></td>
+            <td>
+              <div class="action-links">
+                <a class="link-action" href="javascript:void(0)">审核</a>
+                <a class="link-action" href="javascript:void(0)" onclick="openReportDialog()">查看报告</a>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 底部批量操作栏 -->
+    <div class="batch-bar">
+      <span class="selected-count">已选择：<span id="selectedCount">1</span></span>
+      <a class="batch-action" href="javascript:void(0)">批量审核通过</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- 作文题目弹窗 -->
+<div id="essayMaterialDialog" class="dialog-overlay">
+  <div class="dialog-box">
+    <div class="dialog-header">
+      <span class="dialog-title">作文题目/材料</span>
+      <button class="dialog-close" id="closeEssayMaterial">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <p style="margin-bottom:16px;">总有一段时光让你常常回味，总有一段岁月对你意义非常。那段光阴必定启发过你的深刻感悟，让你感到自己忽然长大。</p>
+      <p style="margin-bottom:0;">请以"那段日子，我忽然长大"为题，写一篇不少于600字的作文。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 1. 查看原图弹窗 ========== -->
+<div id="imageViewerDialog" class="dialog-overlay">
+  <div class="dialog-box image-viewer-dialog">
+    <div class="dialog-header">
+      <span class="dialog-title">查看原图</span>
+      <button class="dialog-close" onclick="closeDialog('imageViewerDialog')">&times;</button>
+    </div>
+    <div class="image-viewer-body">
+      <img id="imageViewerImg" src="" alt="作文原图" />
+    </div>
+    <div class="image-viewer-nav">
+      <button id="imgPrevBtn" onclick="navImage(-1)">&#9664; 上一张</button>
+      <span class="image-counter" id="imageCounter">1 / 2</span>
+      <button id="imgNextBtn" onclick="navImage(1)">下一张 &#9654;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 2. AI润色弹窗 ========== -->
+<div id="polishDialog" class="dialog-overlay">
+  <div class="dialog-box polish-dialog">
+    <div class="dialog-header">
+      <div class="polish-header-nav">
+        <button class="student-nav-arrow" id="polishPrevStudent" title="上一个学生">&#9664;</button>
+        <span class="dialog-title">AI润色</span>
+        <span class="student-nav-label" id="polishStudentLabel">王兴仁（AI批阅完成）</span>
+        <button class="student-nav-arrow" id="polishNextStudent" title="下一个学生">&#9654;</button>
+      </div>
+      <button class="dialog-close" onclick="closeDialog('polishDialog')">&times;</button>
+    </div>
+    <div class="polish-body">
+      <!-- 左侧：原图 -->
+      <div class="polish-left">
+        <div class="polish-section-title">
+          <span class="dot" style="background:#1AC2A3;"></span>作文原图
+        </div>
+        <div id="polishImageContainer">
+          <img id="polishImage" src="" alt="作文原图" />
+        </div>
+        <div class="polish-image-nav" style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:12px;padding-bottom:4px;">
+          <button class="polish-img-nav-btn" id="polishPrevBtn" onclick="navPolishImage(-1)" style="height:30px;padding:0 14px;border:1px solid #dcdfe6;border-radius:4px;background:#fff;color:#606266;font-size:12px;cursor:pointer;">&#9664; 上一张</button>
+          <span class="polish-img-counter" id="polishImgCounter" style="font-size:12px;color:#909399;">1 / 2</span>
+          <button class="polish-img-nav-btn" id="polishNextBtn" onclick="navPolishImage(1)" style="height:30px;padding:0 14px;border:1px solid #dcdfe6;border-radius:4px;background:#fff;color:#606266;font-size:12px;cursor:pointer;">下一张 &#9654;</button>
+        </div>
+      </div>
+      <!-- 右侧：润色内容 -->
+      <div class="polish-right">
+        <div class="polish-section-title" style="justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="dot" style="background:#409eff;"></span>AI润色稿
+          </div>
+          <button class="btn-primary" id="repolishBtn" style="height:28px;padding:0 12px;font-size:12px;">&#8635; 重新润色</button>
+        </div>
+        <div class="polish-text">
+          <span class="polish-title">那段日子，我忽然长大</span>
+          <p>总有一段时光，让你在某个不经意的瞬间，突然明白"长大"这两个字的分量。我的长大，不在生日蜡烛吹灭的那一刻，也不在拿到成绩单的那一天，而是在那段平凡却刻骨的日子里，悄然发生。</p>
+          <p>那是一个深秋的傍晚。放学路上，我第一次注意到父亲的背影。他推着那辆老旧的自行车，车筐里装着刚从菜市场买回的蔬菜。夕阳把他的影子拉得很长，我忽然发现，他的背比记忆中驼了许多。那一刻，我的心像被什么东西轻轻刺了一下。</p>
+          <p>回到家中，母亲正在厨房里忙碌。蒸汽从锅盖边缘升腾起来，模糊了她的身影。我走过去，看见她手上贴满了创可贴——那是常年洗碗留下的痕迹。"妈，我来吧。"我接过她手中的抹布。她愣了一下，笑着说："你还小，去做作业吧。"可我知道，我已经不小了。</p>
+          <p>那天晚上，我做了一件从未做过的事——给父亲泡了一杯茶。茶叶在热水中缓缓舒展，就像我心里那些从未说出口的感激。我把茶端到他面前时，他眼中有了一丝惊讶，随即是藏不住的欣慰。</p>
+          <p>从那以后，我开始学着分担家务。周末的时候，我会早起去买菜；放学回来，我会主动收拾碗筷。母亲常说："你最近怎么这么懂事？"我没有回答，只是在心里默默地说：因为我长大了。</p>
+          <p>那段日子里，我学会了在母亲疲惫时递上一杯温水，学会了在父亲加班晚归时留一盏灯，学会了不再抱怨作业太多，因为我知道，每一份付出都是为了更好的明天。</p>
+          <p>长大不是一瞬间的事，而是一段日子。那段日子里，我从一个只知道索取的孩子，变成了一个懂得付出的少年。我不再是那个躲在父母羽翼下的小鸟，而是开始尝试着用自己的翅膀去丈量天空。</p>
+          <p>如今回想起来，那段日子并没有什么惊天动地的大事，有的只是柴米油盐中的温情，只是日复一日中的坚持。但正是这些平凡的瞬间，让我忽然明白：长大，就是从"被照顾"到"去照顾"的转变，就是从"理所当然"到"心怀感恩"的觉醒。</p>
+          <p>那段日子，我忽然长大。而这份长大，将伴随我一生。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 3. 查看报告弹窗 ========== -->
+<div id="reportDialog" class="dialog-overlay">
+  <div class="dialog-box report-dialog">
+    <div class="report-header-bar">
+      <button class="nav-arrow prev" title="上一个学生">&#9664;</button>
+      <span class="student-label">王兴仁（老师审核完成）</span>
+      <button class="nav-arrow next" title="下一个学生">&#9654;</button>
+      <button class="dialog-close" onclick="closeDialog('reportDialog')" style="position:absolute;right:12px;top:10px;">&times;</button>
+    </div>
+    <div class="report-body">
+      <div class="report-layout">
+        <!-- 左侧：作文图片 -->
+        <div class="report-left">
+          <div class="report-image-tags">
+            <span class="report-image-tag tag-idiom"><span class="tag-icon">&#127775;</span>成语佳句</span>
+            <span class="report-image-tag tag-sunshine"><span class="tag-icon">&#9728;&#65039;</span>阳光语录</span>
+            <span class="report-image-tag tag-rhyme"><span class="tag-icon">&#128274;</span>字斟句酌</span>
+          </div>
+          <div class="report-image-wrapper">
+            <img src="作文示例图片1.jpg" alt="作文原图" />
+          </div>
+        </div>
+        <!-- 右侧：评分与建议 -->
+        <div class="report-right">
+          <!-- 分数 -->
+          <div class="report-score-section">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div class="section-title">分数</div>
+              <div class="score-total">
+                <span class="score-big">47</span>
+                <span class="score-max">/50</span>
+              </div>
+            </div>
+            <div class="score-dimensions">
+              <div class="score-dim-row">
+                <span class="dim-label">审题立意：</span>
+                <div class="dim-stars">
+                  <span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star empty">&#9734;</span>
+                </div>
+              </div>
+              <div class="score-dim-row">
+                <span class="dim-label">内容：</span>
+                <div class="dim-stars">
+                  <span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star empty">&#9734;</span>
+                </div>
+              </div>
+              <div class="score-dim-row">
+                <span class="dim-label">结构：</span>
+                <div class="dim-stars">
+                  <span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star empty">&#9734;</span><span class="star empty">&#9734;</span>
+                </div>
+              </div>
+              <div class="score-dim-row">
+                <span class="dim-label">表达：</span>
+                <div class="dim-stars">
+                  <span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star empty">&#9734;</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 总评 -->
+          <div class="report-summary-section">
+            <div class="section-title">总评</div>
+            <div class="report-summary-text">
+              这篇作文以"那段日子，我忽然长大"为题，紧扣成长主题，立意明确，基本达成了"通过欲扬先抑"的写作目标，体现了初一学生在写人记事方面的初步尝试。文章以母亲为描写对象，选取了期末数学复习和暑假作业两个具体事件，展现了她严格中带着关爱的形象，符合"我眼中最可爱的人"这一题意。
+              <br/><br/>
+              内容上，能围绕"母爱"展开，语言朴实，情感真挚，尤其是母亲蹲下严肃提醒、检查作业时的神态变化等细节描写，较为生动地刻画了人物性格。但全文仍存在错别字较多、语句不通顺等问题，影响表达效果；部分段落略显冗长，详略处理不够合理。建议今后加强语言规范训练，并在选材后进一步精炼结构，使人物形象更鲜明。
+            </div>
+          </div>
+
+          <!-- 修改建议 -->
+          <div class="report-suggestion-section">
+            <div class="section-title">修改建议</div>
+            <div class="report-suggestion-item">
+              <div class="suggestion-title">1. 增强心理描写</div>
+              <div class="suggestion-text">修改建议：建议在爸爸受伤、自己承担责任的转折点中，加入更多内心独白或者情绪波动的描写，如"我从未想到要承担这些，但那一刻我知道自己必须坚强"，以深化"忽然长大"的情感冲击力。</div>
+            </div>
+            <div class="report-suggestion-item">
+              <div class="suggestion-title">2. 丰富细节层次</div>
+              <div class="suggestion-text">修改建议：建议在爷爷受伤、自己承担责任的转折点中，加入更多内心独白或者情绪波动的描写，如"我从未想到要承担这些，但那一刻我知道自己必须坚强"，以深化"忽然长大"的情感冲击力。</div>
+            </div>
+            <div class="report-suggestion-item">
+              <div class="suggestion-title">3. 丰富细节层次</div>
+              <div class="suggestion-text">修改建议：建议在爸爸受伤、自己承担责任的转折点中，加入更多内心独白或者情绪波动的描写，如"我从未想到要承担这些，但那一刻我知道自己必须坚强"，以深化"忽然长大"的情感冲击力。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ========== 通用弹窗工具 ==========
+  function closeDialog(id) {
+    document.getElementById(id).classList.remove('show');
+  }
+  function openDialog(id) {
+    document.getElementById(id).classList.add('show');
+  }
+  // 点击遮罩关闭
+  document.querySelectorAll('.dialog-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('show');
+    });
+  });
+
+  // ========== 1. 查看原图 ==========
+  const sampleImages = [
+    '作文示例图片1.jpg',
+    '作文示例图片2.jpg'
+  ];
+  let currentImageIndex = 0;
+
+  function openImageViewer(imgIndex) {
+    currentImageIndex = imgIndex !== undefined ? imgIndex : 0;
+    document.getElementById('imageViewerImg').src = sampleImages[currentImageIndex];
+    updateImageNav();
+    openDialog('imageViewerDialog');
+  }
+  function navImage(dir) {
+    currentImageIndex = Math.max(0, Math.min(sampleImages.length - 1, currentImageIndex + dir));
+    document.getElementById('imageViewerImg').src = sampleImages[currentImageIndex];
+    updateImageNav();
+  }
+  function updateImageNav() {
+    document.getElementById('imageCounter').textContent = (currentImageIndex + 1) + ' / ' + sampleImages.length;
+    document.getElementById('imgPrevBtn').disabled = currentImageIndex === 0;
+    document.getElementById('imgNextBtn').disabled = currentImageIndex === sampleImages.length - 1;
+  }
+
+  // ========== 2. AI润色 ==========
+  let currentPolishImageIndex = 0;
+
+  // 学生列表及数据
+  const polishStudents = [
+    { name: '王兴仁', status: 'AI批阅完成', score: 47, title: '那段日子，我忽然长大', content: [
+      '总有一段时光，让你在某个不经意的瞬间，突然明白"长大"这两个字的分量。我的长大，不在生日蜡烛吹灭的那一刻，也不在拿到成绩单的那一天，而是在那段平凡却刻骨的日子里，悄然发生。',
+      '那是一个深秋的傍晚。放学路上，我第一次注意到父亲的背影。他推着那辆老旧的自行车，车筐里装着刚从菜市场买回的蔬菜。夕阳把他的影子拉得很长，我忽然发现，他的背比记忆中驼了许多。那一刻，我的心像被什么东西轻轻刺了一下。',
+      '回到家中，母亲正在厨房里忙碌。蒸汽从锅盖边缘升腾起来，模糊了她的身影。我走过去，看见她手上贴满了创可贴——那是常年洗碗留下的痕迹。"妈，我来吧。"我接过她手中的抹布。她愣了一下，笑着说："你还小，去做作业吧。"可我知道，我已经不小了。',
+      '那天晚上，我做了一件从未做过的事——给父亲泡了一杯茶。茶叶在热水中缓缓舒展，就像我心里那些从未说出口的感激。我把茶端到他面前时，他眼中有了一丝惊讶，随即是藏不住的欣慰。',
+      '从那以后，我开始学着分担家务。周末的时候，我会早起去买菜；放学回来，我会主动收拾碗筷。母亲常说："你最近怎么这么懂事？"我没有回答，只是在心里默默地说：因为我长大了。',
+      '那段日子里，我学会了在母亲疲惫时递上一杯温水，学会了在父亲加班晚归时留一盏灯，学会了不再抱怨作业太多，因为我知道，每一份付出都是为了更好的明天。',
+      '长大不是一瞬间的事，而是一段日子。那段日子里，我从一个只知道索取的孩子，变成了一个懂得付出的少年。我不再是那个躲在父母羽翼下的小鸟，而是开始尝试着用自己的翅膀去丈量天空。',
+      '如今回想起来，那段日子并没有什么惊天动地的大事，有的只是柴米油盐中的温情，只是日复一日中的坚持。但正是这些平凡的瞬间，让我忽然明白：长大，就是从"被照顾"到"去照顾"的转变，就是从"理所当然"到"心怀感恩"的觉醒。',
+      '那段日子，我忽然长大。而这份长大，将伴随我一生。'
+    ]},
+    { name: '陈梓月', status: '老师审核完成', score: 47, title: '那段日子，我忽然长大', content: [
+      '总有一段时光，让你在某个不经意的瞬间，突然明白"长大"这两个字的分量。我的长大，不在生日蜡烛吹灭的那一刻，也不在拿到成绩单的那一天，而是在那段平凡却刻骨的日子里，悄然发生。',
+      '那是一个深秋的傍晚。放学路上，我第一次注意到父亲的背影。他推着那辆老旧的自行车，车筐里装着刚从菜市场买回的蔬菜。夕阳把他的影子拉得很长，我忽然发现，他的背比记忆中驼了许多。那一刻，我的心像被什么东西轻轻刺了一下。',
+      '回到家中，母亲正在厨房里忙碌。蒸汽从锅盖边缘升腾起来，模糊了她的身影。我走过去，看见她手上贴满了创可贴——那是常年洗碗留下的痕迹。"妈，我来吧。"我接过她手中的抹布。她愣了一下，笑着说："你还小，去做作业吧。"可我知道，我已经不小了。',
+      '那天晚上，我做了一件从未做过的事——给父亲泡了一杯茶。茶叶在热水中缓缓舒展，就像我心里那些从未说出口的感激。我把茶端到他面前时，他眼中有了一丝惊讶，随即是藏不住的欣慰。',
+      '从那以后，我开始学着分担家务。周末的时候，我会早起去买菜；放学回来，我会主动收拾碗筷。母亲常说："你最近怎么这么懂事？"我没有回答，只是在心里默默地说：因为我长大了。',
+      '那段日子里，我学会了在母亲疲惫时递上一杯温水，学会了在父亲加班晚归时留一盏灯，学会了不再抱怨作业太多，因为我知道，每一份付出都是为了更好的明天。',
+      '长大不是一瞬间的事，而是一段日子。那段日子里，我从一个只知道索取的孩子，变成了一个懂得付出的少年。我不再是那个躲在父母羽翼下的小鸟，而是开始尝试着用自己的翅膀去丈量天空。',
+      '如今回想起来，那段日子并没有什么惊天动地的大事，有的只是柴米油盐中的温情，只是日复一日中的坚持。但正是这些平凡的瞬间，让我忽然明白：长大，就是从"被照顾"到"去照顾"的转变，就是从"理所当然"到"心怀感恩"的觉醒。',
+      '那段日子，我忽然长大。而这份长大，将伴随我一生。'
+    ]}
+  ];
+  let currentPolishStudentIndex = 0;
+
+  function openPolishDialog(studentIndex) {
+    currentPolishStudentIndex = studentIndex !== undefined ? studentIndex : 0;
+    currentPolishImageIndex = 0;
+    renderPolishContent();
+    document.getElementById('polishImage').src = sampleImages[currentPolishImageIndex];
+    updatePolishImageNav();
+    updatePolishStudentNav();
+    openDialog('polishDialog');
+  }
+
+  function renderPolishContent() {
+    const student = polishStudents[currentPolishStudentIndex];
+    document.getElementById('polishStudentLabel').textContent = student.name + '（' + student.status + '）';
+    const container = document.querySelector('.polish-text');
+    let html = '<span class="polish-title">' + student.title + '</span>';
+    student.content.forEach(function(para) {
+      html += '<p>' + para + '</p>';
+    });
+    container.innerHTML = html;
+  }
+
+  function navPolishStudent(dir) {
+    currentPolishStudentIndex = Math.max(0, Math.min(polishStudents.length - 1, currentPolishStudentIndex + dir));
+    currentPolishImageIndex = 0;
+    renderPolishContent();
+    document.getElementById('polishImage').src = sampleImages[currentPolishImageIndex];
+    updatePolishImageNav();
+    updatePolishStudentNav();
+  }
+
+  function updatePolishStudentNav() {
+    document.getElementById('polishPrevStudent').disabled = currentPolishStudentIndex === 0;
+    document.getElementById('polishPrevStudent').style.opacity = currentPolishStudentIndex === 0 ? '0.4' : '1';
+    document.getElementById('polishNextStudent').disabled = currentPolishStudentIndex === polishStudents.length - 1;
+    document.getElementById('polishNextStudent').style.opacity = currentPolishStudentIndex === polishStudents.length - 1 ? '0.4' : '1';
+  }
+
+  function openPolishDialog() {
+    currentPolishImageIndex = 0;
+    document.getElementById('polishImage').src = sampleImages[currentPolishImageIndex];
+    updatePolishImageNav();
+    openDialog('polishDialog');
+  }
+
+  function navPolishImage(dir) {
+    currentPolishImageIndex = Math.max(0, Math.min(sampleImages.length - 1, currentPolishImageIndex + dir));
+    document.getElementById('polishImage').src = sampleImages[currentPolishImageIndex];
+    updatePolishImageNav();
+  }
+
+  function updatePolishImageNav() {
+    document.getElementById('polishImgCounter').textContent = (currentPolishImageIndex + 1) + ' / ' + sampleImages.length;
+    document.getElementById('polishPrevBtn').disabled = currentPolishImageIndex === 0;
+    document.getElementById('polishPrevBtn').style.opacity = currentPolishImageIndex === 0 ? '0.4' : '1';
+    document.getElementById('polishNextBtn').disabled = currentPolishImageIndex === sampleImages.length - 1;
+    document.getElementById('polishNextBtn').style.opacity = currentPolishImageIndex === sampleImages.length - 1 ? '0.4' : '1';
+  }
+
+  // 学生左右切换
+  document.getElementById('polishPrevStudent').addEventListener('click', function() { navPolishStudent(-1); });
+  document.getElementById('polishNextStudent').addEventListener('click', function() { navPolishStudent(1); });
+
+  // 重新润色按钮
+  document.getElementById('repolishBtn').addEventListener('click', function() {
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = '润色中...';
+    btn.style.opacity = '0.6';
+    setTimeout(function() {
+      btn.disabled = false;
+      btn.textContent = '↻ 重新润色';
+      btn.style.opacity = '1';
+      alert('润色已完成！');
+    }, 2000);
+  });
+
+  // ========== 3. 查看报告 ==========
+  function openReportDialog() {
+    openDialog('reportDialog');
+  }
+
+  // AI批阅失败 - 问号提示 + 重试
+  var failHelpBtn = document.getElementById('failHelpBtn');
+  var failTooltip = document.getElementById('failTooltip');
+  var retryBtn = document.getElementById('retryBtn');
+  if (failHelpBtn) {
+    failHelpBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      failTooltip.classList.toggle('show');
+    });
+    document.addEventListener('click', function(e) {
+      if (!failHelpBtn.contains(e.target)) {
+        failTooltip.classList.remove('show');
+      }
+    });
+  }
+  if (retryBtn) {
+    retryBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      failTooltip.classList.remove('show');
+      showToast('收到！AI马上开始干活！');
+    });
+  }
+
+  // Toast 提示
+  function showToast(msg) {
+    var toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    requestAnimationFrame(function() {
+      toast.classList.add('show');
+    });
+    setTimeout(function() {
+      toast.classList.remove('show');
+      setTimeout(function() {
+        toast.remove();
+      }, 300);
+    }, 2000);
+  }
+  // Tab切换
+  function switchTab(tab) {
+    if (tab === 'class') {
+      window.location.href = '语文作文_全日制_任务详情_班级情况.html';
+    }
+  }
+
+  // 全选/取消全选 + 更新已选数量
+  function updateSelectedCount() {
+    const checked = document.querySelectorAll('#studentTableBody input[type="checkbox"]:checked').length;
+    document.getElementById('selectedCount').textContent = checked;
+  }
+
+  document.getElementById('selectAll').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('#studentTableBody input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+    updateSelectedCount();
+  });
+
+  document.querySelectorAll('#studentTableBody input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', updateSelectedCount);
+  });
+
+  // 作文题目弹窗
+  document.getElementById('openEssayMaterial').addEventListener('click', function() {
+    document.getElementById('essayMaterialDialog').classList.add('show');
+  });
+  document.getElementById('closeEssayMaterial').addEventListener('click', function() {
+    document.getElementById('essayMaterialDialog').classList.remove('show');
+  });
+  document.getElementById('essayMaterialDialog').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('show');
+  });
+
+  // 搜索 & 筛选
+  function filterTable() {
+    const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+    const statusFilter = document.getElementById('filterStatus').value;
+    const rows = document.querySelectorAll('#studentTableBody tr');
+    rows.forEach(row => {
+      const name = row.cells[1].textContent.trim().toLowerCase();
+      const statusEl = row.cells[3].querySelector('.status-tag');
+      const status = statusEl ? statusEl.textContent.replace('?', '').trim() : '';
+      const matchName = !keyword || name.includes(keyword);
+      const matchStatus = !statusFilter || status.includes(statusFilter);
+      row.style.display = (matchName && matchStatus) ? '' : 'none';
+    });
+  }
+  document.getElementById('searchInput').addEventListener('input', filterTable);
+  document.getElementById('filterStatus').addEventListener('change', filterTable);
+</script>
+
+</body>
+</html>
