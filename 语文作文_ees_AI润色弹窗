@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI润色后作文</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: rgba(0,0,0,0.5);
+    color: #303133;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  /* ========== 弹窗外层 ========== */
+  .dialog-box {
+    width: 1200px;
+    max-height: 92vh;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ========== 顶部栏 ========== */
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 56px;
+    border-bottom: 1px solid #ebeef5;
+    flex-shrink: 0;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #303133;
+  }
+  .header-name {
+    font-size: 14px;
+    color: #606266;
+  }
+  .header-name .label {
+    color: #909399;
+  }
+  .dialog-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    font-size: 20px;
+    color: #909399;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  .dialog-close:hover {
+    color: #606266;
+    background: #f5f7fa;
+  }
+
+  /* ========== 内容区 ========== */
+  .dialog-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    min-height: 500px;
+  }
+
+  /* --- 左侧：原图 --- */
+  .left-panel {
+    flex: 0 0 42%;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #ebeef5;
+    overflow: hidden;
+  }
+  .left-panel-header {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0;
+  }
+  .left-panel-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .left-panel-title .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #1AC2A3;
+    display: inline-block;
+  }
+  .left-panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .left-panel-content img {
+    max-width: 100%;
+    border-radius: 4px;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  /* --- 右侧：润色稿 --- */
+  .right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+  .right-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0;
+  }
+  .right-panel-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .right-panel-title .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #1AC2A3;
+    display: inline-block;
+  }
+  .right-panel-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    position: relative;
+  }
+  .action-btn {
+    padding: 5px 14px;
+    font-size: 13px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    background: #fff;
+    color: #606266;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .action-btn:hover {
+    border-color: #1AC2A3;
+    color: #1AC2A3;
+  }
+  .action-btn.primary {
+    border-color: #1AC2A3;
+    color: #1AC2A3;
+    background: #f0faf8;
+  }
+  .action-btn.success {
+    border-color: #67c23a;
+    color: #67c23a;
+    background: #f0f9eb;
+  }
+  .action-btn.danger {
+    border-color: #f56c6c;
+    color: #f56c6c;
+    background: #fef0f0;
+  }
+
+  /* 下载下拉菜单 */
+  .download-wrapper {
+    position: relative;
+  }
+  .download-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: #fff;
+    border: 1px solid #ebeef5;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    padding: 4px 0;
+    z-index: 100;
+    min-width: 120px;
+    display: none;
+  }
+  .download-menu.show {
+    display: block;
+  }
+  .download-menu-item {
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #606266;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .download-menu-item:hover {
+    background: #f5f7fa;
+    color: #1AC2A3;
+  }
+
+  /* 编辑模式 */
+  .right-panel-content.editing .essay-title {
+    display: none;
+  }
+  .edit-title-input {
+    display: none;
+    width: 100%;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    padding: 6px 12px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    color: #303133;
+  }
+  .edit-title-input.show {
+    display: block;
+  }
+  .edit-para-textarea {
+    display: none;
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #303133;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    resize: none;
+    overflow: hidden;
+    font-family: inherit;
+    margin-bottom: 4px;
+  }
+  .edit-para-textarea:focus {
+    outline: none;
+    border-color: #1AC2A3;
+    box-shadow: 0 0 0 2px rgba(26,194,163,0.15);
+  }
+  .edit-para-textarea.show {
+    display: block;
+  }
+  /* 理由编辑区 */
+  .edit-reason-wrapper {
+    display: none;
+    width: 100%;
+    margin: 0 0 4px 0;
+    gap: 6px;
+    align-items: flex-start;
+  }
+  .edit-reason-wrapper.show {
+    display: flex;
+  }
+  .edit-reason-textarea {
+    flex: 1;
+    padding: 6px 10px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #f56c6c;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    resize: none;
+    overflow: hidden;
+    font-family: inherit;
+    background: #fef0f0;
+  }
+  .edit-reason-textarea:focus {
+    outline: none;
+    border-color: #f56c6c;
+    box-shadow: 0 0 0 2px rgba(245,108,108,0.12);
+  }
+  .edit-reason-textarea.deleted {
+    background: #f5f7fa;
+    color: #c0c4cc;
+  }
+  .delete-reason-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+    border: 1px solid #f56c6c;
+    border-radius: 4px;
+    background: #fef0f0;
+    color: #f56c6c;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .delete-reason-btn:hover {
+    background: #f56c6c;
+    color: #fff;
+  }
+  .essay-content .reason-block {
+    transition: opacity 0.2s;
+  }
+  .right-panel-content.editing .essay-content .reason-block {
+    display: none;
+  }
+  .edit-actions-bar {
+    display: none;
+    padding: 12px 0;
+    gap: 8px;
+    border-top: 1px solid #f0f0f0;
+    margin-top: 12px;
+  }
+  .edit-actions-bar.show {
+    display: flex;
+  }
+  .right-panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 28px 20px 20px;
+  }
+
+  /* 作文标题 */
+  .essay-title {
+    text-align: center;
+    font-weight: 700;
+    font-size: 18px;
+    color: #303133;
+    margin-bottom: 16px;
+  }
+
+  /* 作文段落 */
+  .essay-content p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #303133;
+    text-indent: 2em;
+    margin: 0 0 4px;
+  }
+
+  /* 理由说明 - 紧跟段落下方 */
+  .essay-content .reason-block {
+    margin: 0 0 14px 2em;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #f56c6c;
+    font-weight: 400;
+  }
+
+  /* ========== Toast ========== */
+  .toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(0,0,0,0.72);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="dialog-box">
+  <!-- ====== 顶部栏 ====== -->
+  <div class="dialog-header">
+    <div class="header-left">
+      <span class="header-title">AI全文润色</span>
+      <span class="header-name"><span class="label">姓名：</span><span id="stuName">王德鸣</span></span>
+    </div>
+    <div class="header-right">
+      <button class="dialog-close" onclick="closeDialog()">&times;</button>
+    </div>
+  </div>
+
+  <!-- ====== 内容区 ====== -->
+  <div class="dialog-body">
+    <!-- 左侧：原图 -->
+    <div class="left-panel">
+      <div class="left-panel-header">
+        <div class="left-panel-title">
+          <span class="dot"></span>作文原图
+        </div>
+      </div>
+      <div class="left-panel-content" id="imageContainer"></div>
+    </div>
+
+    <!-- 右侧：润色稿 -->
+    <div class="right-panel">
+      <div class="right-panel-header">
+        <div class="right-panel-title">
+          <span class="dot"></span>AI润色后作文
+        </div>
+        <div class="right-panel-actions">
+          <button class="action-btn" onclick="toggleEditMode()" id="editBtn">编辑</button>
+          <div class="download-wrapper">
+            <button class="action-btn" onclick="toggleDownloadMenu()">下载</button>
+            <div class="download-menu" id="downloadMenu">
+              <button class="download-menu-item" onclick="downloadEssay('marked')">标记版下载</button>
+              <button class="download-menu-item" onclick="downloadEssay('clean')">纯享版下载</button>
+            </div>
+          </div>
+          <button class="action-btn primary" onclick="repolish()" id="repolishBtn">重新生成</button>
+        </div>
+      </div>
+      <div class="right-panel-content" id="rightPanelContent">
+        <div class="essay-title" id="essayTitle">成长的形状</div>
+        <input class="edit-title-input" id="editTitleInput" type="text" value="成长的形状" />
+        <div class="essay-content" id="essayContent"></div>
+        <div class="edit-actions-bar" id="editActionsBar">
+          <button class="action-btn success" onclick="saveEdit()">保存</button>
+          <button class="action-btn danger" onclick="cancelEdit()">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== 数据 ====================
+const sampleImages = [
+  '作文示例图片1.jpg',
+  '作文示例图片2.jpg'
+];
+
+const essayData = {
+  title: '成长的形状',
+  paragraphs: [
+    {
+      text: '日落时分，夕阳洒下，把桌子的影子拉得长长的。角落里，一面小小的镜子立在那里，映出一个胖乎乎的小脑袋，反射着桌上的笔、本子……每当看见这个场景，我就会想起那次成长的经历。在那场辩论赛中，我第一次触摸到了成长的形状。',
+      reason: '（理由：修正"拉的长长的"为"拉得长长的"；改正"个胖小的头"为"映出一个胖乎乎的小脑袋"；修正"那比辩论赛"为"那场辩论赛"；拆分长句，使表达更通顺。）'
+    },
+    {
+      text: '我本是个连课堂发言都会脸红的人。因为慢热的性格，我常常被老师和同学认为不爱说话、不善言辞，于是我内心越来越不敢公开发言。',
+      reason: '（理由："发言者"改为"发言"；"老师知同学"改为"老师和同学"；句号断开，避免一逗到底。）'
+    },
+    {
+      text: '然而，那次辩论赛前，老师在课后找到我，说："我觉得你平时观点似乎很清晰，不如试着参加这次辩论赛吧？"我听到这句话，内心开始挣扎——拒绝的话在嘴边咬了又咬。但最终，在老师信任的目光里，我听见自己说："好！"',
+      reason: '（理由："这起"改为"那次"；"老师时在"删去"时"；"很见点"改为"观点"；"在试试"改为"试着"；删除多余的"的"；"内心开始思考"改为"内心开始挣扎"，更贴切；修正标点和引号。）'
+    },
+    {
+      text: '此时距离比赛只有两周了。在这两周里，我每天放学都留在教室里练习。班级变成了我一个人的战场。夕阳快要落山时，洒下的黄昏把桌子的影子拉得长长的，我就坐在角落里努力练习。一开始，我甚至连一句完整的话都说得结结巴巴。为了提升自己，我特意带了一面小镜子，看着镜中自己的样子，一遍遍练习——从一句话，到一整篇发言稿……',
+      reason: '（理由："已离要前"改为"距离比赛"；"继续发言"改为"练习"；"拉的长长的"改为"拉得长长的"；"缙连"改为"甚至连"；"说的结巴"改为"说得结结巴巴"；"锁子"改为"小镜子"；用破折号和省略号增强语感。）'
+    }
+  ]
+};
+
+// ==================== 状态 ====================
+let isEditing = false;
+
+// ==================== 渲染 ====================
+function renderContent() {
+  // 渲染右侧作文
+  const container = document.getElementById('essayContent');
+  let html = '';
+  essayData.paragraphs.forEach(function(para, index) {
+    html += '<p id="para-' + index + '">' + para.text + '</p>';
+    html += '<textarea class="edit-para-textarea" id="edit-para-' + index + '">' + para.text + '</textarea>';
+    html += '<div class="edit-reason-wrapper" id="edit-reason-wrap-' + index + '">';
+    html += '<textarea class="edit-reason-textarea" id="edit-reason-' + index + '">' + para.reason + '</textarea>';
+    html += '<button class="delete-reason-btn" onclick="toggleReasonDelete(' + index + ')" id="delete-reason-btn-' + index + '" title="删除理由">删除</button>';
+    html += '</div>';
+    html += '<p class="reason-block" id="reason-' + index + '">' + para.reason + '</p>';
+  });
+  container.innerHTML = html;
+
+  // 渲染左侧所有图片
+  const imageContainer = document.getElementById('imageContainer');
+  let imgHtml = '';
+  sampleImages.forEach(function(src) {
+    imgHtml += '<img src="' + src + '" alt="作文原图" />';
+  });
+  imageContainer.innerHTML = imgHtml;
+}
+
+// ==================== 操作 ====================
+function repolish() {
+  const btn = document.getElementById('repolishBtn');
+  btn.style.opacity = '0.6';
+  btn.style.pointerEvents = 'none';
+  showToast('正在重新润色，请稍候...');
+  setTimeout(function() {
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+    showToast('润色已完成！');
+  }, 2000);
+}
+
+// ---------- 编辑模式 ----------
+function toggleEditMode() {
+  if (isEditing) {
+    cancelEdit();
+    return;
+  }
+  isEditing = true;
+  document.getElementById('rightPanelContent').classList.add('editing');
+  document.getElementById('editTitleInput').classList.add('show');
+  document.getElementById('editTitleInput').value = essayData.title;
+  document.getElementById('editActionsBar').classList.add('show');
+
+  // 显示所有编辑 textarea 和理由编辑区
+  essayData.paragraphs.forEach(function(_, i) {
+    const textarea = document.getElementById('edit-para-' + i);
+    const para = document.getElementById('para-' + i);
+    const reasonWrap = document.getElementById('edit-reason-wrap-' + i);
+    const reasonTextarea = document.getElementById('edit-reason-' + i);
+    textarea.classList.add('show');
+    if (para) para.style.display = 'none';
+    if (reasonWrap) {
+      reasonWrap.classList.add('show');
+      reasonTextarea.classList.remove('deleted');
+      reasonTextarea.value = essayData.paragraphs[i].reason;
+      const btn = document.getElementById('delete-reason-btn-' + i);
+      if (btn) btn.textContent = '删除';
+    }
+  });
+
+  // 自适应 textarea 高度
+  autoResizeAllTextareas();
+
+  document.getElementById('editBtn').textContent = '取消';
+  document.getElementById('editBtn').classList.add('danger');
+  disableOtherButtons(true);
+}
+
+function autoResizeAllTextareas() {
+  document.querySelectorAll('.edit-para-textarea.show, .edit-reason-textarea').forEach(function(ta) {
+    autoResizeTextarea(ta);
+  });
+}
+
+function autoResizeTextarea(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+}
+
+// 绑定 textarea 输入事件实现自适应高度
+document.addEventListener('input', function(e) {
+  if (e.target.matches('.edit-para-textarea, .edit-reason-textarea')) {
+    autoResizeTextarea(e.target);
+  }
+});
+
+function saveEdit() {
+  // 保存标题
+  essayData.title = document.getElementById('editTitleInput').value.trim() || essayData.title;
+
+  // 保存段落和理由
+  essayData.paragraphs.forEach(function(para, i) {
+    const textarea = document.getElementById('edit-para-' + i);
+    if (textarea) {
+      para.text = textarea.value.trim();
+      const paraEl = document.getElementById('para-' + i);
+      if (paraEl) paraEl.textContent = para.text;
+    }
+    // 保存理由
+    const reasonTextarea = document.getElementById('edit-reason-' + i);
+    const reasonEl = document.getElementById('reason-' + i);
+    if (reasonTextarea) {
+      if (reasonTextarea.classList.contains('deleted')) {
+        para.reason = '';
+        if (reasonEl) reasonEl.textContent = '';
+      } else {
+        para.reason = reasonTextarea.value.trim();
+        if (reasonEl) reasonEl.textContent = para.reason;
+      }
+    }
+  });
+
+  // 退出编辑模式
+  exitEditMode();
+  showToast('保存成功！');
+}
+
+function cancelEdit() {
+  // 恢复原始内容
+  essayData.paragraphs.forEach(function(para, i) {
+    const textarea = document.getElementById('edit-para-' + i);
+    if (textarea) textarea.value = para.text;
+    const reasonTextarea = document.getElementById('edit-reason-' + i);
+    if (reasonTextarea) {
+      reasonTextarea.classList.remove('deleted');
+      reasonTextarea.value = para.reason;
+    }
+    const btn = document.getElementById('delete-reason-btn-' + i);
+    if (btn) btn.textContent = '删除';
+  });
+  document.getElementById('editTitleInput').value = essayData.title;
+  exitEditMode();
+}
+
+function exitEditMode() {
+  isEditing = false;
+  document.getElementById('rightPanelContent').classList.remove('editing');
+  document.getElementById('editTitleInput').classList.remove('show');
+  document.getElementById('editActionsBar').classList.remove('show');
+
+  essayData.paragraphs.forEach(function(_, i) {
+    const textarea = document.getElementById('edit-para-' + i);
+    const para = document.getElementById('para-' + i);
+    const reasonWrap = document.getElementById('edit-reason-wrap-' + i);
+    if (textarea) textarea.classList.remove('show');
+    if (para) para.style.display = '';
+    if (reasonWrap) reasonWrap.classList.remove('show');
+  });
+
+  document.getElementById('editBtn').textContent = '编辑';
+  document.getElementById('editBtn').classList.remove('danger');
+  disableOtherButtons(false);
+
+  // 更新标题显示
+  document.getElementById('essayTitle').textContent = essayData.title;
+}
+
+function disableOtherButtons(disabled) {
+  document.getElementById('repolishBtn').style.pointerEvents = disabled ? 'none' : 'auto';
+  document.getElementById('repolishBtn').style.opacity = disabled ? '0.5' : '1';
+}
+
+// ---------- 下载功能 ----------
+// 切换理由删除状态
+function toggleReasonDelete(index) {
+  var textarea = document.getElementById('edit-reason-' + index);
+  var btn = document.getElementById('delete-reason-btn-' + index);
+  if (!textarea || !btn) return;
+  if (textarea.classList.contains('deleted')) {
+    // 恢复
+    textarea.classList.remove('deleted');
+    textarea.value = essayData.paragraphs[index].reason;
+    btn.textContent = '删除';
+  } else {
+    // 删除（标记状态，保存时处理）
+    textarea.classList.add('deleted');
+    textarea.value = '（此条理由已删除）';
+    btn.textContent = '恢复';
+  }
+}
+
+function toggleDownloadMenu() {
+  if (isEditing) return;
+  document.getElementById('downloadMenu').classList.toggle('show');
+}
+
+// 点击其他地方关闭下载菜单
+document.addEventListener('click', function(e) {
+  var menu = document.getElementById('downloadMenu');
+  var wrapper = document.querySelector('.download-wrapper');
+  if (wrapper && !wrapper.contains(e.target)) {
+    menu.classList.remove('show');
+  }
+});
+
+function downloadEssay(type) {
+  document.getElementById('downloadMenu').classList.remove('show');
+
+  var content = '';
+  content += essayData.title + '\n\n';
+
+  essayData.paragraphs.forEach(function(para) {
+    content += '  ' + para.text + '\n';
+    if (type === 'marked' && para.reason) {
+      content += '  ' + para.reason + '\n';
+    }
+    content += '\n';
+  });
+
+  var blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = essayData.title + (type === 'marked' ? '（标记版）' : '（纯享版）') + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast((type === 'marked' ? '标记版' : '纯享版') + '已下载！');
+}
+
+// ==================== 通用 ====================
+function closeDialog() {
+  showToast('关闭弹窗');
+}
+
+function showToast(msg) {
+  var toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(function() {
+    toast.classList.remove('show');
+  }, 2000);
+}
+
+// ==================== 初始化 ====================
+renderContent();
+</script>
+
+</body>
+</html>
